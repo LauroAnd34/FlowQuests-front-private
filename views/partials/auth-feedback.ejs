@@ -1,0 +1,15 @@
+<% if (message) { %>
+    <div
+        id="feedback-notification"
+        class="feedback-notification-container"
+        data-message="<%= message %>">
+        <div id="notification-box" class="auth-feedback-card" role="status" aria-live="polite">
+            <span class="auth-feedback-icon-wrap">
+                <i id="notification-icon" class="fas"></i>
+            </span>
+            <div class="auth-feedback-copy">
+                <strong id="notification-text"></strong>
+            </div>
+        </div>
+    </div>
+<% } %>

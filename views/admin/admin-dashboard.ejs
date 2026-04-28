@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<%- include('../partials/head', {
+    title: 'Painel da Moderacao - FlowQuests',
+    styles: ['/css/styleAdmin.css']
+}) %>
+<body class="admin-page">
+    <section id="main-content" class="section">
+        <div class="container admin-container">
+            <div class="admin-header">
+                <div>
+                    <p class="admin-eyebrow">Area restrita</p>
+                    <h1 class="title admin-title"><i class="fas fa-shield-alt"></i> Moderacao</h1>
+                    <p class="admin-copy">Gerencie contas e mantenha o ecossistema do FlowQuests organizado.</p>
+                </div>
+                <div class="admin-header-actions">
+                    <a href="/dashboard" class="button is-dark">Voltar ao Dashboard</a>
+                    <button id="admin-logout-button" class="button is-danger is-light" type="button">Sair</button>
+                </div>
+            </div>
+
+            <div class="admin-summary">
+                <div class="admin-summary-card">
+                    <span class="summary-label">Administrador</span>
+                    <strong><%= admin.nome %></strong>
+                </div>
+                <div class="admin-summary-card">
+                    <span class="summary-label">Total de usuarios</span>
+                    <strong><%= usuarios.length %></strong>
+                </div>
+            </div>
+
+            <div class="box admin-table-wrapper">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Perfil</th>
+                            <th class="has-text-centered">Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% usuarios.forEach((user) => { %>
+                            <tr>
+                                <td>#<%= user.id %></td>
+                                <td><%= user.nome %></td>
+                                <td><%= user.email %></td>
+                                <td>
+                                    <span class="tag <%= user.perfil === 'ADMIN' ? 'is-danger' : 'is-info' %> is-light">
+                                        <%= user.perfil %>
+                                    </span>
+                                </td>
+                                <td class="has-text-centered">
+                                    <div class="buttons is-centered action-buttons">
+                                        <% if (user.perfil !== 'ADMIN') { %>
+                                            <form action="/admin/promover/<%= user.id %>" method="POST">
+                                                <button class="button is-small is-success" title="Promover para admin" type="submit">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+                                            </form>
+                                        <% } %>
+                                        <button
+                                            class="button is-small is-warning edit-user-button"
+                                            type="button"
+                                            data-user-id="<%= user.id %>"
+                                            data-user-name="<%= user.nome %>"
+                                            data-user-email="<%= user.email %>">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="/admin/deletar/<%= user.id %>" method="POST">
+                                            <button class="button is-small is-danger delete-user-button" type="submit" data-user-name="<%= user.nome %>">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal admin-modal" id="modalEditar">
+        <div class="modal-background admin-modal-backdrop" data-close-modal="true"></div>
+        <div class="admin-modal-card">
+            <button class="admin-modal-close" type="button" aria-label="Fechar" data-close-modal="true">
+                <i class="fas fa-times"></i>
+            </button>
+            <header class="admin-modal-header">
+                <p class="admin-modal-eyebrow">Gerenciamento</p>
+                <h2 class="admin-modal-title">Editar usuario</h2>
+                <p class="admin-modal-copy">Atualize os dados da conta sem sair do painel de moderacao.</p>
+            </header>
+            <section class="admin-modal-body">
+                <form id="formEditar" method="POST">
+                    <div class="field">
+                        <label class="label">Nome</label>
+                        <input class="input" type="text" name="nome" id="editNome" required>
+                    </div>
+                    <div class="field">
+                        <label class="label">E-mail</label>
+                        <input class="input" type="email" name="email" id="editEmail" required>
+                    </div>
+                    <div class="field">
+                        <label class="label">Senha</label>
+                        <input class="input" type="password" name="senha" placeholder="Nova senha (opcional)">
+                    </div>
+                </form>
+            </section>
+            <footer class="admin-modal-actions">
+                <button class="button is-success admin-modal-primary" type="submit" form="formEditar">Salvar</button>
+                <button class="button admin-modal-secondary" type="button" data-close-modal="true">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal admin-modal" id="modalConfirmarAcao">
+        <div class="modal-background admin-modal-backdrop" data-close-confirm-modal="true"></div>
+        <div class="admin-modal-card admin-modal-card-small">
+            <button class="admin-modal-close" type="button" aria-label="Fechar" data-close-confirm-modal="true">
+                <i class="fas fa-times"></i>
+            </button>
+            <header class="admin-modal-header">
+                <p class="admin-modal-eyebrow">Confirmacao</p>
+                <h2 class="admin-modal-title">Confirmar acao</h2>
+            </header>
+            <section class="admin-modal-body">
+                <p id="confirm-action-text" class="admin-modal-copy">Deseja continuar?</p>
+            </section>
+            <footer class="admin-modal-actions">
+                <button id="confirm-action-button" class="button is-danger admin-modal-danger" type="button">Confirmar</button>
+                <button class="button admin-modal-secondary" type="button" data-close-confirm-modal="true">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <%- include('../partials/accessibility-tools') %>
+    <script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

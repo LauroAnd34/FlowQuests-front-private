@@ -1,0 +1,74 @@
+<a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
+<button
+    id="accessibility-toggle"
+    class="accessibility-fab"
+    type="button"
+    aria-label="Abrir menu de acessibilidade"
+    aria-expanded="false"
+    aria-controls="accessibility-panel">
+    <i class="fas fa-universal-access"></i>
+</button>
+
+<aside
+    id="accessibility-panel"
+    class="accessibility-panel"
+    aria-hidden="true">
+    <div class="accessibility-panel-header">
+        <div>
+            <p class="accessibility-eyebrow">Acessibilidade</p>
+            <h2>Leitura e navegação</h2>
+        </div>
+        <button
+            id="accessibility-close"
+            class="accessibility-close"
+            type="button"
+            aria-label="Fechar menu de acessibilidade">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="accessibility-actions">
+        <button type="button" class="accessibility-action" data-accessibility-action="increase-font">
+            <i class="fas fa-plus"></i>
+            <span>Aumentar texto</span>
+        </button>
+        <button type="button" class="accessibility-action" data-accessibility-action="decrease-font">
+            <i class="fas fa-minus"></i>
+            <span>Diminuir texto</span>
+        </button>
+        <button type="button" class="accessibility-action" data-accessibility-action="toggle-contrast">
+            <i class="fas fa-circle-half-stroke"></i>
+            <span>Alto contraste</span>
+        </button>
+        <button type="button" class="accessibility-action" data-accessibility-action="toggle-readable-font">
+            <i class="fas fa-font"></i>
+            <span>Fonte legível</span>
+        </button>
+        <button type="button" class="accessibility-action" data-accessibility-action="toggle-motion">
+            <i class="fas fa-person-walking-arrow-right"></i>
+            <span>Reduzir animações</span>
+        </button>
+        <button type="button" class="accessibility-action is-reset" data-accessibility-action="reset">
+            <i class="fas fa-rotate-left"></i>
+            <span>Restaurar padrão</span>
+        </button>
+    </div>
+
+    <p class="accessibility-hint">
+        As preferências ficam salvas neste navegador para as próximas visitas.
+    </p>
+</aside>
+
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+
+<script src="/js/accessibility.js"></script>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<%- include('partials/head', {
+    title: 'FlowQuests - Login',
+    styles: ['/css/styleTelaInicial.css', '/css/styleLogin.css']
+}) %>
+<body class="auth-page auth-page-login" data-message="<%= message %>">
+    <%- include('partials/auth-feedback', { message }) %>
+
+    <div class="auth-layout">
+        <section class="auth-showcase">
+            <div class="showcase-glow showcase-glow-top"></div>
+            <div class="showcase-glow showcase-glow-bottom"></div>
+
+            <div class="showcase-brand">
+                <img src="/images/FlowQuests-Icon.png" alt="Logo da FlowQuests" class="showcase-logo">
+                <span class="showcase-badge">Modo campanha</span>
+            </div>
+
+            <div class="showcase-copy">
+                <p class="showcase-kicker">Transforme rotina em progresso</p>
+                <h1>Entre na sua guilda de produtividade.</h1>
+                <p>Missões diárias, experiência acumulada, conquistas desbloqueáveis e uma interface que parece jogo de verdade.</p>
+            </div>
+
+            <div class="showcase-stats">
+                <article class="showcase-stat">
+                    <span>Quests</span>
+                    <strong>+120</strong>
+                    <p>missões organizadas por prioridade</p>
+                </article>
+                <article class="showcase-stat">
+                    <span>Progressão</span>
+                    <strong>XP</strong>
+                    <p>suba de nível a cada meta concluída</p>
+                </article>
+            </div>
+        </section>
+
+        <main id="main-content" class="auth-panel">
+            <div class="auth-card auth-card-elevated">
+                <div class="auth-card-header">
+                    <p class="auth-card-kicker">Acesso</p>
+                    <h2>Entrar na Arena</h2>
+                    <p class="auth-card-copy">Faça login para continuar sua jornada, concluir quests e evoluir seu painel.</p>
+                </div>
+
+                <form action="/login" method="POST" class="auth-form">
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control has-icons-left">
+                            <input name="email" class="input" type="email" placeholder="voce@email.com" required>
+                            <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Senha</label>
+                        <div class="control has-icons-left">
+                            <input name="senha" class="input" type="password" placeholder="Digite sua senha" required>
+                            <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                        </div>
+                        <a href="/esqueci-senha" class="forgot-password">Esqueceu a senha?</a>
+                    </div>
+
+                    <div class="buttons">
+                        <button type="submit" class="button is-link is-fullwidth auth-submit">
+                            <strong>Entrar</strong>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="auth-card-footer">
+                    <p>Não tem uma conta? <a href="/cadastrar">Criar perfil agora</a></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('partials/accessibility-tools') %>
+    <script src="/js/login.js"></script>
+</body>
+</html>

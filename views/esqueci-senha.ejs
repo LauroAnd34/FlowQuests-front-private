@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<%- include('partials/head', {
+    title: 'FlowQuests - Recuperar Senha',
+    styles: ['/css/styleTelaInicial.css', '/css/styleLogin.css']
+}) %>
+<body class="auth-page auth-page-recovery" data-message="<%= message %>">
+    <%- include('partials/auth-feedback', { message }) %>
+
+    <div class="auth-layout auth-layout-compact">
+        <section class="auth-showcase auth-showcase-compact">
+            <div class="showcase-glow showcase-glow-top"></div>
+            <div class="showcase-brand">
+                <img src="/images/FlowQuests-Icon.png" alt="Logo da FlowQuests" class="showcase-logo">
+                <span class="showcase-badge">Recuperação</span>
+            </div>
+
+            <div class="showcase-copy">
+                <p class="showcase-kicker">Volte para o jogo</p>
+                <h1>Recupere seu acesso e retome sua campanha.</h1>
+                <p>Informe seu email para seguir com o fluxo de recuperação e voltar para suas missões.</p>
+            </div>
+        </section>
+
+        <main id="main-content" class="auth-panel">
+            <div class="auth-card auth-card-elevated">
+                <div class="auth-card-header">
+                    <p class="auth-card-kicker">Senha</p>
+                    <h2>Recuperar Conta</h2>
+                    <p class="auth-card-copy">Digite o email usado no cadastro para continuarmos o processo.</p>
+                </div>
+
+                <form action="/esqueci-senha" method="POST" class="auth-form">
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control has-icons-left">
+                            <input name="email" class="input" type="email" placeholder="voce@email.com" required>
+                            <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="field is-grouped is-grouped-centered form-actions">
+                        <p class="control is-expanded-mobile">
+                            <a href="/" class="button is-light is-fullwidth auth-action-button">Cancelar</a>
+                        </p>
+                        <p class="control is-expanded-mobile">
+                            <button type="submit" class="button is-dark is-fullwidth auth-submit auth-action-button">
+                                <strong>Enviar</strong>
+                            </button>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <%- include('partials/accessibility-tools') %>
+    <script src="/js/login.js"></script>
+</body>
+</html>

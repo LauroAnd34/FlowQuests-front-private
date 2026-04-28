@@ -1,0 +1,15 @@
+body {
+    overflow-x: hidden;
+}
+
+.auth-page-login .showcase-badge {
+    background: rgba(0, 210, 255, 0.16);
+}
+
+.auth-page-register .showcase-badge {
+    background: rgba(255, 210, 92, 0.16);
+}
+
+.auth-page-recovery .showcase-badge {
+    background: rgba(129, 140, 248, 0.18);
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<%- include('partials/head', {
+    title: 'FlowQuests - Criar Conta',
+    styles: ['/css/styleTelaInicial.css', '/css/styleLogin.css']
+}) %>
+<body class="auth-page auth-page-register" data-message="<%= message %>">
+    <%- include('partials/auth-feedback', { message }) %>
+
+    <div class="auth-layout">
+        <section class="auth-showcase">
+            <div class="showcase-glow showcase-glow-top"></div>
+            <div class="showcase-glow showcase-glow-bottom"></div>
+
+            <div class="showcase-brand">
+                <img src="/images/FlowQuests-Icon.png" alt="Logo da FlowQuests" class="showcase-logo">
+                <span class="showcase-badge">Nova jornada</span>
+            </div>
+
+            <div class="showcase-copy">
+                <p class="showcase-kicker">Crie seu personagem</p>
+                <h1>Comece uma campanha que realmente te puxa para frente.</h1>
+                <p>Monte seu perfil, acompanhe XP, desbloqueie recompensas e organize tarefas como se fossem fases de um game.</p>
+            </div>
+
+            <div class="showcase-stats">
+                <article class="showcase-stat">
+                    <span>Evolução</span>
+                    <strong>Níveis</strong>
+                    <p>cresça com pequenas vitórias diárias</p>
+                </article>
+                <article class="showcase-stat">
+                    <strong>Recompensas</strong>
+                    <p>desbloqueie conquistas ao cumprir metas</p>
+                </article>
+            </div>
+        </section>
+
+        <main id="main-content" class="auth-panel">
+            <div class="auth-card auth-card-elevated">
+                <div class="auth-card-header">
+                    <p class="auth-card-kicker">Cadastro</p>
+                    <h2>Criar Perfil</h2>
+                    <p class="auth-card-copy">Prepare sua conta para entrar no FlowQuests e começar a subir de nível.</p>
+                </div>
+
+                <form action="/cadastrar" method="POST" class="auth-form">
+                    <div class="field">
+                        <label class="label">Nome</label>
+                        <div class="control has-icons-left">
+                            <input name="nome" class="input" type="text" placeholder="Seu nome completo" required>
+                            <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control has-icons-left">
+                            <input name="email" class="input" type="email" placeholder="voce@email.com" required>
+                            <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Senha</label>
+                        <div class="control has-icons-left">
+                            <input name="senha" class="input" type="password" placeholder="Crie uma senha" required minlength="6">
+                            <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Confirmar Senha</label>
+                        <div class="control has-icons-left">
+                            <input name="confirmarSenha" class="input" type="password" placeholder="Repita sua senha" required minlength="6">
+                            <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="buttons">
+                        <button type="submit" class="button is-primary is-fullwidth auth-submit">
+                            <strong>Registrar</strong>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="auth-card-footer">
+                    <p>Já tem uma conta? <a href="/">Fazer login</a></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('partials/accessibility-tools') %>
+    <script src="/js/login.js"></script>
+</body>
+</html>
