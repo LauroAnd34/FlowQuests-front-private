@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<%
+    const isBanned = status === 'BANIDO';
+    const title = isBanned ? 'Conta Banida - FlowQuests' : 'Conta Bloqueada - FlowQuests';
+    const badge = isBanned ? 'Acesso encerrado' : 'Acesso pausado';
+    const kicker = isBanned ? 'Status da conta' : 'Moderacao';
+    const heading = isBanned ? 'Sua conta foi banida.' : 'Sua conta esta bloqueada.';
+    const copy = isBanned
+        ? 'O acesso ao FlowQuests foi encerrado por uma decisao administrativa. Se acreditar que houve um engano, fale com a equipe responsavel pelo sistema.'
+        : 'Seu perfil acumulou restricoes e o acesso foi temporariamente interrompido. Procure um administrador para revisar a situacao.';
+    const note = isBanned
+        ? 'Enquanto o status permanecer como BANIDO, novos logins nao serao liberados pelo backend.'
+        : 'O backend permite login apenas para contas ATIVAS. Quando sua situacao for regularizada, voce podera voltar normalmente.';
+%>
+<%- include('partials/head', {
+    title,
+    styles: ['/css/styleTelaInicial.css', '/css/styleLogin.css']
+}) %>
+<body class="auth-page auth-page-status">
+    <div class="auth-layout auth-layout-compact">
+        <section class="auth-showcase auth-showcase-compact">
+            <div class="showcase-glow showcase-glow-top"></div>
+            <div class="showcase-glow showcase-glow-bottom"></div>
+
+            <div class="showcase-brand">
+                <img src="/images/FlowQuests-Icon.png" alt="Logo da FlowQuests" class="showcase-logo">
+                <span class="showcase-badge"><%= badge %></span>
+            </div>
+
+            <div class="showcase-copy">
+                <p class="showcase-kicker"><%= kicker %></p>
+                <h1><%= heading %></h1>
+                <p><%= copy %></p>
+            </div>
+        </section>
+
+        <main id="main-content" class="auth-panel">
+            <div class="auth-card auth-card-elevated account-status-card <%= isBanned ? 'is-danger' : 'is-warning' %>">
+                <div class="auth-card-header">
+                    <p class="auth-card-kicker"><%= status %></p>
+                    <h2><%= isBanned ? 'Acesso indisponivel' : 'Aguardando liberacao' %></h2>
+                    <p class="auth-card-copy"><%= note %></p>
+                </div>
+
+                <div class="account-status-icon">
+                    <i class="fas <%= isBanned ? 'fa-user-slash' : 'fa-user-lock' %>"></i>
+                </div>
+
+                <div class="auth-security-note">
+                    <span class="icon"><i class="fas fa-shield-halved"></i></span>
+                    <p>Se voce precisar de suporte, compartilhe com o administrador que seu status atual e <strong><%= status %></strong>.</p>
+                </div>
+
+                <div class="field is-grouped is-grouped-centered form-actions">
+                    <p class="control is-expanded-mobile">
+                        <a href="/" class="button is-light is-fullwidth auth-action-button">Voltar ao login</a>
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('partials/accessibility-tools') %>
+</body>
+</html>

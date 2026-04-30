@@ -56,6 +56,15 @@ body.admin-page {
     box-shadow: 0 12px 28px rgba(33, 61, 96, 0.08);
 }
 
+.user-name-cell {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.user-name-cell small {
+    color: #7288a4;
+}
+
 .summary-label {
     display: block;
     margin-bottom: 0.35rem;
@@ -72,7 +81,32 @@ body.admin-page {
 }
 
 .action-buttons {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+}
+
+.are-moderation-actions {
+    gap: 0.45rem;
+}
+
+.status-tag {
+    font-weight: 700;
+}
+
+.warning-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.38rem 0.65rem;
+    border-radius: 999px;
+    color: #9a6700;
+    background: #fff4cc;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.warning-pill.is-critical {
+    color: #b42318;
+    background: #ffe3de;
 }
 
 .admin-modal .modal-background {
@@ -157,6 +191,36 @@ body.admin-page {
     background: #fff;
 }
 
+.admin-modal-body .textarea,
+.admin-modal-body .select select {
+    border-radius: 16px;
+    border-color: #dce7f7;
+    box-shadow: none;
+    background: #f8fbff;
+}
+
+.admin-modal-body .textarea:focus,
+.admin-modal-body .select select:focus {
+    border-color: #2d7ff9;
+    box-shadow: 0 0 0 0.15em rgba(45, 127, 249, 0.12);
+    background: #fff;
+}
+
+.admin-textarea {
+    min-height: 7rem;
+    resize: vertical;
+}
+
+.admin-warning-hint {
+    margin-top: 0.85rem;
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    color: #7a5b00;
+    background: #fff7dd;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
 .admin-modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -207,15 +271,20 @@ body.admin-page {
     top: 1.2rem;
     right: 1.2rem;
     z-index: 1100;
-    width: 66px;
-    height: 66px;
-    border: 2px solid rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 50%;
     color: #fff;
     background: linear-gradient(135deg, #16324f, #2d7ff9);
     box-shadow: 0 18px 34px rgba(22, 50, 79, 0.24);
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
+    touch-action: none;
+    user-select: none;
 }
 
 .accessibility-panel {
@@ -349,7 +418,9 @@ body.accessibility-high-contrast .accessibility-panel {
 
 body.accessibility-high-contrast .admin-modal-close,
 body.accessibility-high-contrast .admin-modal-secondary,
-body.accessibility-high-contrast .admin-modal-body .input {
+body.accessibility-high-contrast .admin-modal-body .input,
+body.accessibility-high-contrast .admin-modal-body textarea,
+body.accessibility-high-contrast .admin-modal-body select {
     color: #fff !important;
     background: #102038 !important;
     border-color: rgba(255, 255, 255, 0.26) !important;
@@ -360,6 +431,46 @@ body.accessibility-high-contrast .admin-modal-copy,
 body.accessibility-high-contrast .admin-modal-eyebrow,
 body.accessibility-high-contrast .admin-modal-body .label {
     color: #f8fbff !important;
+}
+
+body.accessibility-high-contrast .table,
+body.accessibility-high-contrast .table th,
+body.accessibility-high-contrast .table td,
+body.accessibility-high-contrast .table tr,
+body.accessibility-high-contrast .admin-title,
+body.accessibility-high-contrast .admin-copy,
+body.accessibility-high-contrast .admin-eyebrow,
+body.accessibility-high-contrast .summary-label,
+body.accessibility-high-contrast .admin-summary-card strong,
+body.accessibility-high-contrast .button,
+body.accessibility-high-contrast .input,
+body.accessibility-high-contrast textarea,
+body.accessibility-high-contrast select,
+body.accessibility-high-contrast .accessibility-panel h2,
+body.accessibility-high-contrast .accessibility-eyebrow,
+body.accessibility-high-contrast .accessibility-hint,
+body.accessibility-high-contrast .input::placeholder {
+    color: #f8fbff !important;
+}
+
+body.accessibility-high-contrast .input::placeholder {
+    opacity: 0.8;
+}
+
+body.accessibility-high-contrast .table {
+    background: #0a0a0a !important;
+}
+
+body.accessibility-high-contrast .table th,
+body.accessibility-high-contrast .table td {
+    background: #0a0a0a !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.accessibility-high-contrast .accessibility-fab {
+    color: #f8fbff !important;
+    background: linear-gradient(135deg, #16253d, #315f9d) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 body.accessibility-high-contrast .accessibility-action {
@@ -384,6 +495,11 @@ body.accessibility-reduced-motion *::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+}
+
+body.is-dragging-accessibility-fab .accessibility-fab {
+    cursor: grabbing;
+    box-shadow: 0 22px 44px rgba(22, 50, 79, 0.3);
 }
 
 @media (max-width: 1024px) {

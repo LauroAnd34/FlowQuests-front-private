@@ -4,6 +4,11 @@
     title: 'Painel da Moderacao - FlowQuests',
     styles: ['/css/styleAdmin.css']
 }) %>
+<%
+    const totalBloqueados = usuarios.filter((user) => user.statusConta === 'BLOQUEADO').length;
+    const totalBanidos = usuarios.filter((user) => user.statusConta === 'BANIDO').length;
+    const totalAdvertencias = usuarios.reduce((sum, user) => sum + ((user.advertencias || []).length), 0);
+%>
 <body class="admin-page">
     <section id="main-content" class="section">
         <div class="container admin-container">
@@ -28,6 +33,14 @@
                     <span class="summary-label">Total de usuarios</span>
                     <strong><%= usuarios.length %></strong>
                 </div>
+                <div class="admin-summary-card">
+                    <span class="summary-label">Advertencias</span>
+                    <strong><%= totalAdvertencias %></strong>
+                </div>
+                <div class="admin-summary-card">
+                    <span class="summary-label">Contas restritas</span>
+                    <strong><%= totalBloqueados + totalBanidos %></strong>
+                </div>
             </div>
 
             <div class="box admin-table-wrapper">
@@ -38,22 +51,73 @@
                             <th>Nome</th>
                             <th>E-mail</th>
                             <th>Perfil</th>
+                            <th>Status</th>
+                            <th>Advertencias</th>
                             <th class="has-text-centered">Acoes</th>
                         </tr>
                     </thead>
                     <tbody>
                         <% usuarios.forEach((user) => { %>
+                            <% const warningCount = (user.advertencias || []).length; %>
                             <tr>
                                 <td>#<%= user.id %></td>
-                                <td><%= user.nome %></td>
+                                <td>
+                                    <div class="user-name-cell">
+                                        <strong><%= user.nome %></strong>
+                                        <small>Criado em <%= user.criadoEm ? new Date(user.criadoEm).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '--' %></small>
+                                    </div>
+                                </td>
                                 <td><%= user.email %></td>
                                 <td>
                                     <span class="tag <%= user.perfil === 'ADMIN' ? 'is-danger' : 'is-info' %> is-light">
                                         <%= user.perfil %>
                                     </span>
                                 </td>
+                                <td>
+                                    <span class="tag status-tag <%= user.statusConta === 'BANIDO' ? 'is-dark' : (user.statusConta === 'BLOQUEADO' ? 'is-warning' : 'is-success') %>">
+                                        <%= user.statusConta || 'ATIVO' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="warning-pill <%= warningCount >= 3 ? 'is-critical' : '' %>">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        <span><%= warningCount %></span>
+                                    </span>
+                                </td>
                                 <td class="has-text-centered">
-                                    <div class="buttons is-centered action-buttons">
+                                    <div class="buttons is-centered action-buttons are-moderation-actions">
+                                        <button
+                                            class="button is-small is-warning is-light warn-user-button"
+                                            type="button"
+                                            data-user-id="<%= user.id %>"
+                                            data-user-name="<%= user.nome %>"
+                                            data-user-warning-count="<%= warningCount %>">
+                                            <i class="fas fa-bullhorn"></i>
+                                        </button>
+                                        <% if (user.statusConta !== 'BANIDO') { %>
+                                            <button
+                                                class="button is-small is-dark is-light moderation-confirm-button"
+                                                type="button"
+                                                data-confirm-title="Banir conta"
+                                                data-confirm-text="Deseja banir permanentemente o usuario <%= user.nome %>?"
+                                                data-confirm-variant="danger"
+                                                data-submit-form-id="ban-form-<%= user.id %>">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                            <form id="ban-form-<%= user.id %>" action="/admin/banir/<%= user.id %>" method="POST"></form>
+                                        <% } %>
+                                        <% if (user.statusConta === 'ATIVO') { %>
+                                            <button
+                                                class="button is-small is-link is-light moderation-confirm-button"
+                                                type="button"
+                                                data-confirm-title="Bloquear conta"
+                                                data-confirm-text="Deseja bloquear a conta de <%= user.nome %>? Com 3 advertencias o backend tambem faz esse bloqueio automaticamente."
+                                                data-confirm-variant="warning"
+                                                data-submit-form-id="block-form-<%= user.id %>">
+                                                <i class="fas fa-user-lock"></i>
+                                            </button>
+                                            <form id="block-form-<%= user.id %>" action="/admin/bloquear/<%= user.id %>" method="POST"></form>
+                                        <% } %>
                                         <% if (user.perfil !== 'ADMIN') { %>
                                             <form action="/admin/promover/<%= user.id %>" method="POST">
                                                 <button class="button is-small is-success" title="Promover para admin" type="submit">
@@ -66,14 +130,21 @@
                                             type="button"
                                             data-user-id="<%= user.id %>"
                                             data-user-name="<%= user.nome %>"
-                                            data-user-email="<%= user.email %>">
+                                            data-user-email="<%= user.email %>"
+                                            data-user-profile="<%= user.perfil %>"
+                                            data-user-status="<%= user.statusConta || 'ATIVO' %>">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <form action="/admin/deletar/<%= user.id %>" method="POST">
-                                            <button class="button is-small is-danger delete-user-button" type="submit" data-user-name="<%= user.nome %>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <button
+                                            class="button is-small is-danger delete-user-button moderation-confirm-button"
+                                            type="button"
+                                            data-confirm-title="Excluir usuario"
+                                            data-confirm-text="Deseja realmente excluir o usuario <%= user.nome %> do sistema?"
+                                            data-confirm-variant="danger"
+                                            data-submit-form-id="delete-form-<%= user.id %>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <form id="delete-form-<%= user.id %>" action="/admin/deletar/<%= user.id %>" method="POST"></form>
                                     </div>
                                 </td>
                             </tr>
@@ -109,11 +180,51 @@
                         <label class="label">Senha</label>
                         <input class="input" type="password" name="senha" placeholder="Nova senha (opcional)">
                     </div>
+                    <div class="field">
+                        <label class="label">Perfil</label>
+                        <div class="select is-fullwidth">
+                            <select name="perfil" id="editPerfil">
+                                <option value="USER">USER</option>
+                                <option value="ADMIN">ADMIN</option>
+                            </select>
+                        </div>
+                    </div>
                 </form>
             </section>
             <footer class="admin-modal-actions">
                 <button class="button is-success admin-modal-primary" type="submit" form="formEditar">Salvar</button>
                 <button class="button admin-modal-secondary" type="button" data-close-modal="true">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal admin-modal" id="modalAdvertir">
+        <div class="modal-background admin-modal-backdrop" data-close-warning-modal="true"></div>
+        <div class="admin-modal-card">
+            <button class="admin-modal-close" type="button" aria-label="Fechar" data-close-warning-modal="true">
+                <i class="fas fa-times"></i>
+            </button>
+            <header class="admin-modal-header">
+                <p class="admin-modal-eyebrow">Moderacao</p>
+                <h2 class="admin-modal-title">Aplicar advertencia</h2>
+                <p id="warning-modal-copy" class="admin-modal-copy">Registre o motivo e o detalhamento da advertencia.</p>
+            </header>
+            <section class="admin-modal-body">
+                <form id="formAdvertir" method="POST">
+                    <div class="field">
+                        <label class="label">Motivo</label>
+                        <input class="input" type="text" name="motivo" id="warningMotivo" maxlength="100" required>
+                    </div>
+                    <div class="field">
+                        <label class="label">Detalhamento</label>
+                        <textarea class="textarea admin-textarea" name="detalhamento" id="warningDetalhamento" rows="4" placeholder="Explique o que motivou a advertencia."></textarea>
+                    </div>
+                    <p id="warning-count-hint" class="admin-warning-hint"></p>
+                </form>
+            </section>
+            <footer class="admin-modal-actions">
+                <button class="button is-warning admin-modal-primary" type="submit" form="formAdvertir">Registrar advertencia</button>
+                <button class="button admin-modal-secondary" type="button" data-close-warning-modal="true">Cancelar</button>
             </footer>
         </div>
     </div>
@@ -126,7 +237,7 @@
             </button>
             <header class="admin-modal-header">
                 <p class="admin-modal-eyebrow">Confirmacao</p>
-                <h2 class="admin-modal-title">Confirmar acao</h2>
+                <h2 id="confirm-action-title" class="admin-modal-title">Confirmar acao</h2>
             </header>
             <section class="admin-modal-body">
                 <p id="confirm-action-text" class="admin-modal-copy">Deseja continuar?</p>

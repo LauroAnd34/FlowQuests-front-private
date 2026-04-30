@@ -14,6 +14,9 @@ const {
   promoteUserToAdmin,
   updateUserAsAdmin,
   deleteUserAsAdmin,
+  warnUserAsAdmin,
+  blockUserAsAdmin,
+  banUserAsAdmin,
 } = require('./lib/api-client');
 const {
   buildDashboardViewModel,
@@ -78,12 +81,30 @@ app.post('/cadastrar', async (req, res) => {
     await registerUser({ nome, email, senha });
     res.redirect('/?message=success');
   } catch (error) {
+    console.error('Falha no cadastro:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      code: error.code,
+      message: error.message,
+      cause: error.cause?.message,
+      stack: error.stack?.split('\n').slice(0, 3).join(' | '),
+      apiUrl: process.env.API_URL || 'http://127.0.0.1:8080/api (fallback localhost)',
+    });
     res.redirect('/cadastrar?message=register_failed');
   }
 });
 
 app.get('/esqueci-senha', (req, res) => {
   res.render('esqueci-senha', { message: req.query.message || '' });
+});
+
+app.get('/conta-status', (req, res) => {
+  const rawStatus = String(req.query.status || 'BLOQUEADO').toUpperCase();
+  const status = ['ATIVO', 'BLOQUEADO', 'BANIDO'].includes(rawStatus)
+    ? rawStatus
+    : 'BLOQUEADO';
+
+  res.render('conta-status', { status });
 });
 
 app.post('/esqueci-senha', async (req, res) => {
@@ -122,6 +143,13 @@ app.get('/dashboard', requireSession, async (req, res) => {
         getUserTasksByState(userId, 'concluida'),
         getAchievements(userId),
       ]);
+
+    if (usuario.statusConta && usuario.statusConta !== 'ATIVO') {
+      req.session.destroy(() => {
+        res.redirect(`/conta-status?status=${encodeURIComponent(usuario.statusConta)}`);
+      });
+      return;
+    }
 
     const viewModel = buildDashboardViewModel({
       usuario,
@@ -213,6 +241,36 @@ app.post('/admin/deletar/:id', requireSession, async (req, res) => {
     res.redirect('/admin/painel');
   } catch (error) {
     res.status(500).send('Erro ao deletar usuario.');
+  }
+});
+
+app.post('/admin/advertir/:id', requireSession, async (req, res) => {
+  try {
+    await warnUserAsAdmin(req.session.userId, req.params.id, {
+      motivo: req.body.motivo,
+      detalhamento: req.body.detalhamento,
+    });
+    res.redirect('/admin/painel');
+  } catch (error) {
+    res.status(500).send('Erro ao advertir usuario.');
+  }
+});
+
+app.post('/admin/bloquear/:id', requireSession, async (req, res) => {
+  try {
+    await blockUserAsAdmin(req.session.userId, req.params.id);
+    res.redirect('/admin/painel');
+  } catch (error) {
+    res.status(500).send('Erro ao bloquear usuario.');
+  }
+});
+
+app.post('/admin/banir/:id', requireSession, async (req, res) => {
+  try {
+    await banUserAsAdmin(req.session.userId, req.params.id);
+    res.redirect('/admin/painel');
+  } catch (error) {
+    res.status(500).send('Erro ao banir usuario.');
   }
 });
 
