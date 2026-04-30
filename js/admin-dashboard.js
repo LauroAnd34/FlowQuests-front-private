@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
   const editModal = document.getElementById('modalEditar');
   const warningModal = document.getElementById('modalAdvertir');
+  const warningHistoryModal = document.getElementById('modalHistoricoAdvertencias');
   const confirmModal = document.getElementById('modalConfirmarAcao');
   const editButtons = document.querySelectorAll('.edit-user-button');
   const warnButtons = document.querySelectorAll('.warn-user-button');
+  const warningHistoryButtons = document.querySelectorAll('.warning-history-button');
   const moderationButtons = document.querySelectorAll('.moderation-confirm-button');
   const closeEditButtons = document.querySelectorAll('[data-close-modal="true"]');
   const closeWarningButtons = document.querySelectorAll('[data-close-warning-modal="true"]');
+  const closeHistoryButtons = document.querySelectorAll('[data-close-history-modal="true"]');
   const closeConfirmButtons = document.querySelectorAll('[data-close-confirm-modal="true"]');
   const nameInput = document.getElementById('editNome');
   const emailInput = document.getElementById('editEmail');
@@ -16,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const warningMotivo = document.getElementById('warningMotivo');
   const warningCountHint = document.getElementById('warning-count-hint');
   const warningModalCopy = document.getElementById('warning-modal-copy');
+  const warningHistoryCopy = document.getElementById('warning-history-copy');
+  const warningHistorySummary = document.getElementById('warning-history-summary');
+  const warningHistoryList = document.getElementById('warning-history-list');
   const confirmActionButton = document.getElementById('confirm-action-button');
   const confirmActionTitle = document.getElementById('confirm-action-title');
   const confirmActionText = document.getElementById('confirm-action-text');
@@ -65,6 +71,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  warningHistoryButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const warningCount = Number(button.dataset.userWarningCount || 0);
+      const status = button.dataset.userStatus || 'ATIVO';
+      let warnings = [];
+
+      try {
+        warnings = JSON.parse(decodeURIComponent(button.dataset.warnings || '[]'));
+      } catch (error) {
+        warnings = [];
+      }
+
+      warningHistoryCopy.textContent = `Resumo das advertencias aplicadas a ${button.dataset.userName}.`;
+      warningHistorySummary.innerHTML = `
+        <span class="warning-history-chip"><i class="fas fa-user"></i> ${button.dataset.userName}</span>
+        <span class="warning-history-chip"><i class="fas fa-triangle-exclamation"></i> ${warningCount} advertencia(s)</span>
+        <span class="warning-history-chip"><i class="fas fa-shield-halved"></i> Status ${status}</span>
+      `;
+
+      if (!warnings.length) {
+        warningHistoryList.innerHTML = '<div class="warning-history-empty">Nenhuma advertencia registrada para este usuario.</div>';
+      } else {
+        warningHistoryList.innerHTML = warnings
+          .map((warning) => {
+            const formattedDate = warning.criadoEm
+              ? new Date(warning.criadoEm).toLocaleString('pt-BR')
+              : 'Data indisponivel';
+
+            return `
+              <article class="warning-history-card">
+                <div class="warning-history-card-header">
+                  <h4>${warning.motivo || 'Advertencia sem motivo'}</h4>
+                  <time>${formattedDate}</time>
+                </div>
+                <p>${warning.detalhamento || 'Sem detalhamento informado.'}</p>
+              </article>
+            `;
+          })
+          .join('');
+      }
+
+      openModal(warningHistoryModal);
+    });
+  });
+
   moderationButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const formId = button.dataset.submitFormId;
@@ -92,6 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', closeWarningModal);
   });
 
+  closeHistoryButtons.forEach((button) => {
+    button.addEventListener('click', () => closeModal(warningHistoryModal));
+  });
+
   closeConfirmButtons.forEach((button) => {
     button.addEventListener('click', closeConfirmModal);
   });
@@ -116,6 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
   warningModal?.addEventListener('click', (event) => {
     if (event.target === warningModal) {
       closeWarningModal();
+    }
+  });
+
+  warningHistoryModal?.addEventListener('click', (event) => {
+    if (event.target === warningHistoryModal) {
+      closeModal(warningHistoryModal);
     }
   });
 

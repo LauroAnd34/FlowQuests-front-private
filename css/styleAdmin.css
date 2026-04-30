@@ -102,11 +102,76 @@ body.admin-page {
     background: #fff4cc;
     font-size: 0.82rem;
     font-weight: 700;
+    border: none;
+    cursor: pointer;
 }
 
 .warning-pill.is-critical {
     color: #b42318;
     background: #ffe3de;
+}
+
+.warning-history-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.warning-history-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 999px;
+    background: #f3f8ff;
+    color: #38506d;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.warning-history-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.warning-history-card {
+    padding: 1rem 1.05rem;
+    border: 1px solid #dce7f7;
+    border-radius: 18px;
+    background: #f8fbff;
+}
+
+.warning-history-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.warning-history-card h4 {
+    color: #20324b;
+    font-weight: 800;
+}
+
+.warning-history-card time {
+    color: #6b819b;
+    font-size: 0.86rem;
+}
+
+.warning-history-card p {
+    color: #5d738e;
+    line-height: 1.55;
+}
+
+.warning-history-empty {
+    padding: 1rem 1.05rem;
+    border-radius: 18px;
+    color: #5d738e;
+    background: #f8fbff;
+    border: 1px dashed #dce7f7;
+    text-align: center;
 }
 
 .admin-modal .modal-background {

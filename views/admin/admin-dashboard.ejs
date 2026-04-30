@@ -79,10 +79,16 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="warning-pill <%= warningCount >= 3 ? 'is-critical' : '' %>">
+                                    <button
+                                        class="warning-pill warning-history-button <%= warningCount >= 3 ? 'is-critical' : '' %>"
+                                        type="button"
+                                        data-user-name="<%= user.nome %>"
+                                        data-user-status="<%= user.statusConta || 'ATIVO' %>"
+                                        data-user-warning-count="<%= warningCount %>"
+                                        data-warnings="<%- encodeURIComponent(JSON.stringify((user.advertencias || []).map((warning) => ({ id: warning.id, motivo: warning.motivo, detalhamento: warning.detalhamento, criadoEm: warning.criadoEm })))) %>">
                                         <i class="fas fa-triangle-exclamation"></i>
                                         <span><%= warningCount %></span>
-                                    </span>
+                                    </button>
                                 </td>
                                 <td class="has-text-centered">
                                     <div class="buttons is-centered action-buttons are-moderation-actions">
@@ -225,6 +231,27 @@
             <footer class="admin-modal-actions">
                 <button class="button is-warning admin-modal-primary" type="submit" form="formAdvertir">Registrar advertencia</button>
                 <button class="button admin-modal-secondary" type="button" data-close-warning-modal="true">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal admin-modal" id="modalHistoricoAdvertencias">
+        <div class="modal-background admin-modal-backdrop" data-close-history-modal="true"></div>
+        <div class="admin-modal-card">
+            <button class="admin-modal-close" type="button" aria-label="Fechar" data-close-history-modal="true">
+                <i class="fas fa-times"></i>
+            </button>
+            <header class="admin-modal-header">
+                <p class="admin-modal-eyebrow">Historico</p>
+                <h2 class="admin-modal-title">Advertencias registradas</h2>
+                <p id="warning-history-copy" class="admin-modal-copy">Confira as advertencias aplicadas ao usuario selecionado.</p>
+            </header>
+            <section class="admin-modal-body">
+                <div id="warning-history-summary" class="warning-history-summary"></div>
+                <div id="warning-history-list" class="warning-history-list"></div>
+            </section>
+            <footer class="admin-modal-actions">
+                <button class="button admin-modal-secondary" type="button" data-close-history-modal="true">Fechar</button>
             </footer>
         </div>
     </div>
