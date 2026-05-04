@@ -1,11 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
   const storageKey = 'flowquests-accessibility';
+  const positionKey = 'flowquests-accessibility-position';
   const body = document.body;
+  const root = document.documentElement;
   const toggleButton = document.getElementById('accessibility-toggle');
   const panel = document.getElementById('accessibility-panel');
   const closeButton = document.getElementById('accessibility-close');
   const actionButtons = document.querySelectorAll('[data-accessibility-action]');
-  const root = document.documentElement;
+  const fabMargin = 16;
+  const panelMargin = 12;
+  const panelGap = 14;
 
   if (!toggleButton || !panel) {
     return;
@@ -23,6 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
     reducedMotion: false,
   };
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
   function readState() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
@@ -34,6 +42,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function writeState(state) {
     localStorage.setItem(storageKey, JSON.stringify(state));
+  }
+
+  function readCornerPosition() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(positionKey));
+      if (
+        saved &&
+        (saved.horizontal === 'left' || saved.horizontal === 'right') &&
+        (saved.vertical === 'top' || saved.vertical === 'bottom')
+      ) {
+        return saved;
+      }
+    } catch (error) {
+      return null;
+    }
+
+    return null;
+  }
+
+  function writeCornerPosition(position) {
+    localStorage.setItem(positionKey, JSON.stringify(position));
+  }
+
+  function clearCornerPosition() {
+    localStorage.removeItem(positionKey);
   }
 
   function showFeedback(message) {
@@ -79,10 +112,47 @@ document.addEventListener('DOMContentLoaded', () => {
     syncActionButtons(state);
   }
 
+  function applyCornerPosition(position) {
+    toggleButton.style.left = '';
+    toggleButton.style.right = '';
+    toggleButton.style.top = '';
+    toggleButton.style.bottom = '';
+
+    if (!position) {
+      return;
+    }
+
+    toggleButton.style[position.horizontal] = `${fabMargin}px`;
+    toggleButton.style[position.vertical] = `${fabMargin}px`;
+  }
+
+  function positionPanel() {
+    if (!panel.classList.contains('is-open')) {
+      return;
+    }
+
+    const buttonRect = toggleButton.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const alignLeft = buttonRect.left < window.innerWidth / 2;
+    const openBelow = buttonRect.top < window.innerHeight / 2;
+
+    let left = alignLeft ? buttonRect.left : buttonRect.right - panelRect.width;
+    let top = openBelow ? buttonRect.bottom + panelGap : buttonRect.top - panelRect.height - panelGap;
+
+    left = clamp(left, panelMargin, window.innerWidth - panelRect.width - panelMargin);
+    top = clamp(top, panelMargin, window.innerHeight - panelRect.height - panelMargin);
+
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  }
+
   function openPanel() {
     panel.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
     toggleButton.setAttribute('aria-expanded', 'true');
+    positionPanel();
   }
 
   function closePanel() {
@@ -91,10 +161,97 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleButton.setAttribute('aria-expanded', 'false');
   }
 
-  let state = readState();
-  applyState(state);
+  const savedCorner = readCornerPosition();
+  let activeCorner = savedCorner;
+
+  applyState(readState());
+  applyCornerPosition(savedCorner);
+
+  let isDragging = false;
+  let hasDragged = false;
+  let dragPointerId = null;
+
+  function handlePointerMove(event) {
+    if (!isDragging || event.pointerId !== dragPointerId) {
+      return;
+    }
+
+    const buttonRect = toggleButton.getBoundingClientRect();
+    const previewLeft = clamp(
+      event.clientX - buttonRect.width / 2,
+      panelMargin,
+      window.innerWidth - buttonRect.width - panelMargin
+    );
+    const previewTop = clamp(
+      event.clientY - buttonRect.height / 2,
+      panelMargin,
+      window.innerHeight - buttonRect.height - panelMargin
+    );
+
+    if (
+      !hasDragged &&
+      (Math.abs(event.movementX) > 0 || Math.abs(event.movementY) > 0)
+    ) {
+      hasDragged = true;
+      body.classList.add('is-dragging-accessibility-fab');
+      closePanel();
+    }
+
+    toggleButton.style.left = `${previewLeft}px`;
+    toggleButton.style.top = `${previewTop}px`;
+    toggleButton.style.right = 'auto';
+    toggleButton.style.bottom = 'auto';
+  }
+
+  function finishDrag(event) {
+    if (!isDragging || (event && event.pointerId !== dragPointerId)) {
+      return;
+    }
+
+    isDragging = false;
+    dragPointerId = null;
+    toggleButton.releasePointerCapture?.(event.pointerId);
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', finishDrag);
+    window.removeEventListener('pointercancel', finishDrag);
+    body.classList.remove('is-dragging-accessibility-fab');
+
+    if (hasDragged) {
+      const rect = toggleButton.getBoundingClientRect();
+      const nextCorner = {
+        horizontal: rect.left + rect.width / 2 < window.innerWidth / 2 ? 'left' : 'right',
+        vertical: rect.top + rect.height / 2 < window.innerHeight / 2 ? 'top' : 'bottom',
+      };
+
+      activeCorner = nextCorner;
+      writeCornerPosition(nextCorner);
+      applyCornerPosition(nextCorner);
+
+      window.setTimeout(() => {
+        hasDragged = false;
+      }, 0);
+    }
+  }
+
+  toggleButton.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 && event.pointerType !== 'touch') {
+      return;
+    }
+
+    isDragging = true;
+    hasDragged = false;
+    dragPointerId = event.pointerId;
+    toggleButton.setPointerCapture?.(event.pointerId);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', finishDrag);
+    window.addEventListener('pointercancel', finishDrag);
+  });
 
   toggleButton.addEventListener('click', () => {
+    if (hasDragged) {
+      return;
+    }
+
     if (panel.classList.contains('is-open')) {
       closePanel();
       return;
@@ -115,10 +272,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  window.addEventListener('flowquests:open-accessibility', () => {
+    openPanel();
+  });
+
+  window.addEventListener('resize', () => {
+    applyCornerPosition(activeCorner);
+    positionPanel();
+  });
+
   actionButtons.forEach((button) => {
     button.addEventListener('click', () => {
+      let state = readState();
       const action = button.dataset.accessibilityAction;
-      let feedbackMessage = 'Configuração atualizada.';
+      let feedbackMessage = 'Configuracao atualizada.';
 
       if (action === 'increase-font') {
         state.fontScale = Math.min(state.fontScale + 0.1, 1.4);
@@ -137,21 +304,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (action === 'toggle-readable-font') {
         state.readableFont = !state.readableFont;
-        feedbackMessage = state.readableFont ? 'Fonte legível ativada.' : 'Fonte legível desativada.';
+        feedbackMessage = state.readableFont ? 'Fonte legivel ativada.' : 'Fonte legivel desativada.';
       }
 
       if (action === 'toggle-motion') {
         state.reducedMotion = !state.reducedMotion;
-        feedbackMessage = state.reducedMotion ? 'Redução de animações ativada.' : 'Redução de animações desativada.';
+        feedbackMessage = state.reducedMotion ? 'Reducao de animacoes ativada.' : 'Reducao de animacoes desativada.';
       }
 
       if (action === 'reset') {
         state = { ...defaultState };
-        feedbackMessage = 'Acessibilidade restaurada para o padrão.';
+        activeCorner = null;
+        clearCornerPosition();
+        applyCornerPosition(null);
+        feedbackMessage = 'Acessibilidade restaurada para o padrao.';
       }
 
       writeState(state);
       applyState(state);
+      positionPanel();
       showFeedback(feedbackMessage);
     });
   });

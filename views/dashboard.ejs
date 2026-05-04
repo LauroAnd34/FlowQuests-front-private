@@ -13,7 +13,7 @@
             <div class="sidebar-inner">
                 <div class="logo-area">
                     <div class="logo-icon">
-                        <i class="fas fa-bolt"></i>
+                        <img src="/images/FlowQuests-IconWeb.png" alt="Logo FlowQuests">
                     </div>
                     <div>
                         <span class="logo-text">FLOWQUESTS</span>
@@ -38,20 +38,12 @@
                     </button>
 
                     <div id="profile-menu" class="profile-menu">
-                        <div class="profile-menu-header">
-                            <div class="avatar avatar-large"><%= (usuario.nome || 'U').charAt(0).toUpperCase() %></div>
-                            <div class="profile-menu-info">
-                                <p class="username"><%= usuario.nome %> #<%= usuario.id %></p>
-                                <p class="level"><%= gameProfile.playerTitle %></p>
-                            </div>
-                        </div>
-
                         <div class="profile-menu-body">
                             <p class="menu-label">Atalhos</p>
                             <ul class="menu-list">
-                                <li><a><span class="icon"><i class="fas fa-chart-line"></i></span> Seu progresso</a></li>
-                                <li><a><span class="icon"><i class="fas fa-trophy"></i></span> Conquistas</a></li>
-                                <li><a><span class="icon"><i class="fas fa-list-check"></i></span> Missões</a></li>
+                                <li><a href="#" data-dashboard-shortcut="dashboard"><span class="icon"><i class="fas fa-chart-line"></i></span> Seu progresso</a></li>
+                                <li><a href="#" data-dashboard-shortcut="recompensas"><span class="icon"><i class="fas fa-trophy"></i></span> Conquistas</a></li>
+                                <li><a href="#" data-dashboard-shortcut="tarefas"><span class="icon"><i class="fas fa-list-check"></i></span> Missoes</a></li>
                                 <% if (usuario.perfil === 'ADMIN') { %>
                                     <li>
                                         <a href="/admin/painel" class="has-text-danger has-text-weight-bold">
@@ -66,34 +58,29 @@
 
                 <nav>
                     <ul class="sidebar-nav" id="tabs-nav">
-                        <li class="sidebar-nav-link is-active" data-tab="tarefas" data-target-tab="tarefas">
+                        <li class="sidebar-nav-link is-active" data-nav-key="dashboard" data-target-tab="dashboard">
                             <i class="fas fa-house"></i>
                             <span>Dashboard</span>
                         </li>
-                        <li class="sidebar-nav-link" data-tab="tarefas" data-target-tab="tarefas">
+                        <li class="sidebar-nav-link" data-nav-key="tarefas" data-target-tab="tarefas">
                             <i class="fas fa-scroll"></i>
-                            <span>Missões</span>
+                            <span>Missoes</span>
                         </li>
-                        <li class="sidebar-nav-link" data-tab="recompensas" data-target-tab="recompensas">
+                        <li class="sidebar-nav-link" data-nav-key="recompensas" data-target-tab="recompensas">
                             <i class="fas fa-box-open"></i>
-                            <span>Inventário</span>
+                            <span>Inventario</span>
                         </li>
-                        <li class="sidebar-nav-link" data-tab="concluidas" data-target-tab="concluidas">
+                        <li class="sidebar-nav-link" data-nav-key="concluidas" data-target-tab="concluidas">
                             <i class="fas fa-ranking-star"></i>
                             <span>Ranking</span>
                         </li>
-                        <li class="sidebar-nav-link" data-tab="recompensas" data-target-tab="recompensas">
+                        <li class="sidebar-nav-link" data-nav-key="configuracoes" data-target-tab="configuracoes">
                             <i class="fas fa-gear"></i>
-                            <span>Configurações</span>
+                            <span>Configuracoes</span>
                         </li>
                     </ul>
                 </nav>
             </div>
-
-            <button id="logout-button" class="logout-link button is-light is-fullwidth" type="button">
-                <span class="icon"><i class="fas fa-right-from-bracket"></i></span>
-                <span>Sair</span>
-            </button>
         </aside>
 
         <main id="main-content" class="main-content">
@@ -102,8 +89,8 @@
                     <button id="sidebar-toggle-button" class="sidebar-toggle" type="button" aria-label="Alternar menu lateral">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1>Bom dia, <%= usuario.nome %></h1>
-                    <p>Seu progresso hoje está excelente! Continue avançando nas próximas missões.</p>
+                    <h1 id="greeting-heading" data-user-name="<%= usuario.nome %>">Ola, <%= usuario.nome %></h1>
+                    <p>Seu progresso hoje esta forte. Vamos transformar a rotina em uma campanha bem mais agradavel.</p>
                 </div>
 
                 <div class="header-actions">
@@ -113,12 +100,12 @@
                             <span id="notification-badge" class="badge is-danger">1</span>
                         </span>
                         <div id="notification-menu" class="notification-menu">
-                            <div class="notification-menu-header">Notificações</div>
+                            <div class="notification-menu-header">Notificacoes</div>
                             <div class="notification-item">
                                 <span class="icon"><i class="fas fa-sparkles"></i></span>
                                 <p>
-                                    <strong>Quest pronta para começar.</strong>
-                                    <span>Concluir sua próxima missão rende XP para o level <%= gameProfile.level + 1 %>.</span>
+                                    <strong>Quest pronta para avancar.</strong>
+                                    <span>Concluir a proxima missao rende XP para o nivel <%= gameProfile.level + 1 %>.</span>
                                 </p>
                             </div>
                         </div>
@@ -136,30 +123,58 @@
                 </div>
             </header>
 
-            <section class="stats-grid">
-                <article class="stat-card">
-                    <span>Ouro Atual</span>
-                    <h3><%= gameProfile.xpTotal.toLocaleString('pt-BR') %> G</h3>
-                </article>
-                <article class="stat-card">
-                    <span>Status</span>
-                    <h3><%= gameProfile.playerTitle %></h3>
-                </article>
-                <article class="stat-card">
-                    <span>Streaks</span>
-                    <h3><%= Math.max(1, gameProfile.completedCount) %> Dias</h3>
-                </article>
+            <section id="dashboard-content" class="tab-content is-active">
+                <section class="stats-grid">
+                    <article class="stat-card">
+                        <span>Ouro Atual</span>
+                        <h3><%= gameProfile.xpTotal.toLocaleString('pt-BR') %> G</h3>
+                    </article>
+                    <article class="stat-card">
+                        <span>Status</span>
+                        <h3><%= gameProfile.playerTitle %></h3>
+                    </article>
+                    <article class="stat-card">
+                        <span>Streaks</span>
+                        <h3><%= Math.max(1, gameProfile.completedCount) %> Dias</h3>
+                    </article>
+                </section>
+
+                <section class="overview-grid">
+                    <article class="overview-card">
+                        <p class="overview-eyebrow">Foco do dia</p>
+                        <h2><%= gameProfile.dailyFocus %></h2>
+                        <p class="overview-copy">Comece pelo objetivo mais valioso do momento e mantenha seu ritmo de progresso.</p>
+                    </article>
+
+                    <article class="overview-card overview-card-accent">
+                        <p class="overview-eyebrow">Acoes rapidas</p>
+                        <div class="overview-actions">
+                            <button type="button" class="overview-action" data-dashboard-shortcut-button="tarefas">
+                                <i class="fas fa-scroll"></i>
+                                <span>Ver missoes</span>
+                            </button>
+                            <button type="button" class="overview-action" data-dashboard-shortcut-button="recompensas">
+                                <i class="fas fa-trophy"></i>
+                                <span>Ver conquistas</span>
+                            </button>
+                            <button type="button" class="overview-action" data-dashboard-shortcut-button="configuracoes">
+                                <i class="fas fa-sliders"></i>
+                                <span>Ajustar leitura</span>
+                            </button>
+                        </div>
+                    </article>
+                </section>
             </section>
 
-            <section id="tarefas-content" class="tab-content is-active">
+            <section id="tarefas-content" class="tab-content">
                 <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-scroll"></i> MISSÕES DISPONÍVEIS</h2>
+                    <h2 class="section-title"><i class="fas fa-scroll"></i> MISSOES DISPONIVEIS</h2>
                     <form action="/dashboard" method="GET" class="search-form">
                         <input type="hidden" name="pending_page" value="0">
                         <input type="hidden" name="completed_page" value="0">
                         <div class="field has-addons">
                             <div class="control is-expanded">
-                                <input class="input" type="text" name="search" placeholder="Pesquisar missões..." value="<%= search %>">
+                                <input class="input" type="text" name="search" placeholder="Pesquisar missoes..." value="<%= search %>">
                             </div>
                             <div class="control">
                                 <button type="submit" class="button is-link">
@@ -173,7 +188,7 @@
                 <div id="tasks-container" class="quests-list">
                     <% if (tarefasPendentes.content.length === 0) { %>
                         <article class="empty-state-card">
-                            <h3>Nenhuma missão disponível</h3>
+                            <h3>Nenhuma missao disponivel</h3>
                             <p>Crie uma nova quest para continuar sua campanha.</p>
                         </article>
                     <% } %>
@@ -183,7 +198,7 @@
                             <div class="quest-info">
                                 <span class="quest-tag"><%= tarefa.categoryLabel %></span>
                                 <h4><%= tarefa.title %></h4>
-                                <p>Dificuldade: <%= tarefa.status.text %> • <%= tarefa.dateLabel %> às <%= tarefa.timeLabel %></p>
+                                <p>Dificuldade: <%= tarefa.status.text %> • <%= tarefa.dateLabel %> as <%= tarefa.timeLabel %></p>
                             </div>
                             <div class="quest-actions">
                                 <div class="xp-reward">+ <%= tarefa.rewardXp %> XP</div>
@@ -193,7 +208,7 @@
                     <% }) %>
                 </div>
 
-                <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginação de missões disponíveis">
+                <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginacao de missoes disponiveis">
                     <a
                         href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number - 1 %>&completed_page=<%= completedPage.number %>"
                         class="pagination-previous"
@@ -204,7 +219,7 @@
                         href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number + 1 %>&completed_page=<%= completedPage.number %>"
                         class="pagination-next"
                         <%= pendingPage.last ? 'disabled' : '' %>>
-                        Próxima
+                        Proxima
                     </a>
                     <ul class="pagination-list">
                         <li><span class="pagination-link is-current"><%= pendingPage.number + 1 %> de <%= pendingPage.totalPages %></span></li>
@@ -213,12 +228,12 @@
             </section>
 
             <section id="concluidas-content" class="tab-content">
-                <h2 class="section-title"><i class="fas fa-circle-check"></i> MISSÕES CONCLUÍDAS</h2>
+                <h2 class="section-title"><i class="fas fa-circle-check"></i> RANKING DE MISSOES CONCLUIDAS</h2>
                 <div class="quests-list">
                     <% if (tarefasConcluidas.content.length === 0) { %>
                         <article class="empty-state-card">
-                            <h3>Nenhuma missão concluída</h3>
-                            <p>Assim que você finalizar quests, elas aparecerão aqui.</p>
+                            <h3>Nenhuma missao concluida</h3>
+                            <p>Assim que voce finalizar quests, elas aparecerao aqui.</p>
                         </article>
                     <% } %>
 
@@ -227,14 +242,14 @@
                             <div class="quest-info">
                                 <span class="quest-tag"><%= tarefa.categoryLabel %></span>
                                 <h4><%= tarefa.title %></h4>
-                                <p>Concluída em <%= tarefa.dateLabel %> • recompensa recebida</p>
+                                <p>Concluida em <%= tarefa.dateLabel %> • recompensa recebida</p>
                             </div>
                             <div class="xp-reward">+ <%= tarefa.rewardXp %> XP</div>
                         </article>
                     <% }) %>
                 </div>
 
-                <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginação de missões concluídas">
+                <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginacao de missoes concluidas">
                     <a
                         href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number %>&completed_page=<%= completedPage.number - 1 %>"
                         class="pagination-previous"
@@ -245,7 +260,7 @@
                         href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number %>&completed_page=<%= completedPage.number + 1 %>"
                         class="pagination-next"
                         <%= completedPage.last ? 'disabled' : '' %>>
-                        Próxima
+                        Proxima
                     </a>
                     <ul class="pagination-list">
                         <li><span class="pagination-link is-current"><%= completedPage.number + 1 %> de <%= completedPage.totalPages %></span></li>
@@ -254,7 +269,7 @@
             </section>
 
             <section id="recompensas-content" class="tab-content">
-                <h2 class="section-title"><i class="fas fa-award"></i> INVENTÁRIO DE CONQUISTAS</h2>
+                <h2 class="section-title"><i class="fas fa-award"></i> INVENTARIO DE CONQUISTAS</h2>
                 <div class="rewards-grid">
                     <% todasAsConquistas.forEach((conquista) => { %>
                         <article class="reward-card <%= conquista.unlocked ? 'unlocked' : '' %>">
@@ -263,6 +278,39 @@
                             <p><%= conquista.descricao %></p>
                         </article>
                     <% }) %>
+                </div>
+            </section>
+
+            <section id="configuracoes-content" class="tab-content">
+                <h2 class="section-title"><i class="fas fa-gear"></i> AJUSTES DE EXPERIENCIA</h2>
+                <div class="settings-grid">
+                    <article class="settings-card">
+                        <p class="settings-eyebrow">Acessibilidade</p>
+                        <h3>Leitura, contraste e movimento</h3>
+                        <p>Abra o menu de acessibilidade para ajustar tamanho do texto, contraste, fonte e animacoes.</p>
+                        <button type="button" id="open-accessibility-from-settings" class="button is-link is-light settings-button">Abrir acessibilidade</button>
+                    </article>
+                    <article class="settings-card">
+                        <p class="settings-eyebrow">Produtividade</p>
+                        <h3>Criar e revisar missoes</h3>
+                        <p>Abra rapidamente o cadastro de quest ou volte para sua lista principal sem procurar no menu.</p>
+                        <div class="settings-actions">
+                            <button type="button" id="create-task-from-settings" class="button is-primary settings-button">Nova missao</button>
+                            <button type="button" id="open-tasks-from-settings" class="button is-light settings-button">Ver missoes</button>
+                        </div>
+                    </article>
+                    <article class="settings-card">
+                        <p class="settings-eyebrow">Colecao</p>
+                        <h3>Conquistas e inventario</h3>
+                        <p>Vá direto para suas recompensas desbloqueadas e acompanhe como sua campanha esta evoluindo.</p>
+                        <button type="button" id="open-rewards-from-settings" class="button is-warning settings-button">Abrir inventario</button>
+                    </article>
+                    <article class="settings-card">
+                        <p class="settings-eyebrow">Sessao</p>
+                        <h3>Sair com seguranca</h3>
+                        <p>Finalize sua sessao por aqui sem precisar voltar para o menu lateral.</p>
+                        <button type="button" id="open-logout-from-settings" class="button is-dark settings-button">Encerrar sessao</button>
+                    </article>
                 </div>
             </section>
         </main>
@@ -290,7 +338,7 @@
                 </div>
 
                 <div class="field">
-                    <label class="label">Horário</label>
+                    <label class="label">Horario</label>
                     <div class="control">
                         <input id="task-time" class="input" type="time" required>
                     </div>
@@ -301,7 +349,7 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select id="task-category" required>
-                                <option value="remedios">Remédios</option>
+                                <option value="remedios">Remedios</option>
                                 <option value="atividades">Atividades</option>
                                 <option value="trabalhos">Trabalhos</option>
                                 <option value="eventos">Eventos</option>
@@ -322,7 +370,7 @@
     <div id="confirm-task-modal" class="modal-overlay">
         <div class="modal-content modal-content-small">
             <h2 class="title is-4 has-text-centered">Confirmar Quest</h2>
-            <p class="has-text-centered modal-copy">Você realmente quer marcar esta missão como concluída?</p>
+            <p class="has-text-centered modal-copy">Voce realmente quer marcar esta missao como concluida?</p>
             <div class="field is-grouped is-grouped-centered">
                 <p class="control"><button id="cancel-completion-button" type="button" class="button is-light">Cancelar</button></p>
                 <p class="control"><button id="confirm-completion-button" type="button" class="button is-success">Confirmar</button></p>
@@ -333,7 +381,7 @@
     <div id="confirm-logout-modal" class="modal-overlay">
         <div class="modal-content modal-content-small">
             <h2 class="title is-4 has-text-centered">Sair da conta</h2>
-            <p class="has-text-centered modal-copy">Deseja encerrar sua sessão agora?</p>
+            <p class="has-text-centered modal-copy">Deseja encerrar sua sessao agora?</p>
             <div class="field is-grouped is-grouped-centered">
                 <p class="control"><button id="cancel-logout-button" type="button" class="button is-light">Cancelar</button></p>
                 <p class="control"><a href="/logout" class="button is-danger">Sair</a></p>

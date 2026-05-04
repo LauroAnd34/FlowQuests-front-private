@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutButton = document.getElementById('logout-button');
   const confirmLogoutModal = document.getElementById('confirm-logout-modal');
   const cancelLogoutButton = document.getElementById('cancel-logout-button');
+  const openAccessibilityFromSettings = document.getElementById('open-accessibility-from-settings');
+  const openLogoutFromSettings = document.getElementById('open-logout-from-settings');
+  const accessibilityToggle = document.getElementById('accessibility-toggle');
   const toast = document.getElementById('dashboard-toast');
   const toastCard = document.getElementById('dashboard-toast-card');
   const toastIcon = document.getElementById('dashboard-toast-icon');
@@ -29,9 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('xp-progress-bar');
   const progressStartLabel = document.getElementById('progress-start-label');
   const progressEndLabel = document.getElementById('progress-end-label');
-  const tabs = document.querySelectorAll('#tabs-nav li');
   const tabContents = document.querySelectorAll('.tab-content');
   const sidebarNavLinks = document.querySelectorAll('.sidebar-nav-link');
+  const shortcutLinks = document.querySelectorAll('[data-dashboard-shortcut]');
+  const shortcutButtons = document.querySelectorAll('[data-dashboard-shortcut-button]');
+  const greetingHeading = document.getElementById('greeting-heading');
+  const createTaskFromSettings = document.getElementById('create-task-from-settings');
+  const openRewardsFromSettings = document.getElementById('open-rewards-from-settings');
+  const openTasksFromSettings = document.getElementById('open-tasks-from-settings');
 
   let taskIdToComplete = null;
   let currentUserXP = Number(body.dataset.userXp || 0);
@@ -48,13 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (type === 'is-success') {
       iconClass = 'fa-circle-check';
-    }
-
-    if (type === 'is-error') {
+    } else if (type === 'is-error') {
       iconClass = 'fa-circle-xmark';
-    }
-
-    if (type === 'is-warning') {
+    } else if (type === 'is-warning') {
       iconClass = 'fa-triangle-exclamation';
     }
 
@@ -98,18 +102,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function activateTab(tabName) {
-    tabs.forEach((tab) => {
-      tab.classList.toggle('is-active', tab.dataset.tab === tabName);
-    });
+  function updateGreeting() {
+    if (!greetingHeading) {
+      return;
+    }
 
+    const userName = greetingHeading.dataset.userName || 'Aventureiro';
+    const currentHour = new Date().getHours();
+    let prefix = 'Ola';
+
+    if (currentHour >= 5 && currentHour < 12) {
+      prefix = 'Bom dia';
+    } else if (currentHour >= 12 && currentHour < 18) {
+      prefix = 'Boa tarde';
+    } else {
+      prefix = 'Boa noite';
+    }
+
+    greetingHeading.textContent = `${prefix}, ${userName}`;
+  }
+
+  function activateTab(tabName) {
     tabContents.forEach((content) => {
       content.classList.toggle('is-active', content.id === `${tabName}-content`);
     });
 
     sidebarNavLinks.forEach((button) => {
-      button.classList.toggle('is-active', button.dataset.targetTab === tabName);
+      button.classList.toggle('is-active', button.dataset.navKey === tabName);
     });
+
+    if (window.innerWidth <= 768 && sidebar?.classList.contains('is-active')) {
+      sidebar.classList.remove('is-active');
+    }
   }
 
   function openModal(modal) {
@@ -133,7 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function goToTab(tabName) {
+    activateTab(tabName);
+    profileMenu?.classList.remove('is-active');
+  }
+
   updateProgressBar();
+  updateGreeting();
 
   if (taskDateInput) {
     taskDateInput.min = new Date().toISOString().split('T')[0];
@@ -183,12 +213,58 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebarOnMobile(event.target);
   });
 
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => activateTab(tab.dataset.tab));
+  sidebarNavLinks.forEach((button) => {
+    button.addEventListener('click', () => {
+      const targetTab = button.dataset.targetTab;
+      if (targetTab) {
+        activateTab(targetTab);
+      }
+    });
   });
 
-  sidebarNavLinks.forEach((button) => {
-    button.addEventListener('click', () => activateTab(button.dataset.targetTab));
+  shortcutLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = link.dataset.dashboardShortcut;
+      if (target) {
+        goToTab(target);
+      }
+    });
+  });
+
+  shortcutButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.dashboardShortcutButton;
+      if (target === 'configuracoes') {
+        activateTab('configuracoes');
+        window.dispatchEvent(new Event('flowquests:open-accessibility'));
+        return;
+      }
+
+      if (target) {
+        goToTab(target);
+      }
+    });
+  });
+
+  openAccessibilityFromSettings?.addEventListener('click', () => {
+    window.dispatchEvent(new Event('flowquests:open-accessibility'));
+  });
+
+  openLogoutFromSettings?.addEventListener('click', () => {
+    openModal(confirmLogoutModal);
+  });
+
+  createTaskFromSettings?.addEventListener('click', () => {
+    openModal(addTaskModal);
+  });
+
+  openRewardsFromSettings?.addEventListener('click', () => {
+    goToTab('recompensas');
+  });
+
+  openTasksFromSettings?.addEventListener('click', () => {
+    goToTab('tarefas');
   });
 
   addTaskButton?.addEventListener('click', () => openModal(addTaskModal));
