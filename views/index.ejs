@@ -46,6 +46,7 @@
                 </div>
 
                 <form action="/login" method="POST" class="auth-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="field">
                         <label class="label">Email</label>
                         <div class="control has-icons-left">
@@ -57,7 +58,7 @@
                     <div class="field">
                         <label class="label">Senha</label>
                         <div class="control has-icons-left">
-                            <input name="senha" class="input" type="password" placeholder="Digite sua senha" required>
+                            <input name="senha" class="input" type="password" placeholder="Digite sua senha" required minlength="8" autocomplete="current-password">
                             <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
                         </div>
                         <a href="/esqueci-senha" class="forgot-password">Esqueceu a senha?</a>

@@ -31,6 +31,36 @@ document.addEventListener('DOMContentLoaded', () => {
       colorClass: 'is-danger',
       iconClass: 'fa-times-circle',
     },
+    reset_success: {
+      text: 'Senha redefinida com sucesso! Faca login com a nova senha.',
+      colorClass: 'is-success',
+      iconClass: 'fa-check-circle',
+    },
+    reset_missing_fields: {
+      text: 'Preencha todos os campos para redefinir a senha.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
+    reset_invalid_token: {
+      text: 'O link de redefinicao e invalido ou expirou.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
+    reset_password_short: {
+      text: 'A nova senha precisa ter pelo menos 8 caracteres.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
+    reset_password_weak: {
+      text: 'Use uma senha mais forte, com maiuscula, minuscula e numero.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
+    reset_failed: {
+      text: 'Nao foi possivel redefinir a senha agora. Tente novamente.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
     login_missing_fields: {
       text: 'Preencha email e senha para entrar.',
       colorClass: 'is-danger',
@@ -45,6 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
       text: 'Email ou senha incorretos. Tente novamente.',
       colorClass: 'is-danger',
       iconClass: 'fa-times-circle',
+    },
+    login_rate_limited: {
+      text: 'Muitas tentativas de login. Aguarde alguns minutos e tente de novo.',
+      colorClass: 'is-warning',
+      iconClass: 'fa-circle-exclamation',
     },
     login_required: {
       text: 'Faca login para acessar o dashboard.',
@@ -67,7 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
       iconClass: 'fa-times-circle',
     },
     register_password_short: {
-      text: 'A senha precisa ter pelo menos 6 caracteres.',
+      text: 'A senha precisa ter pelo menos 8 caracteres.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
+    register_password_weak: {
+      text: 'Use uma senha mais forte, com maiuscula, minuscula e numero.',
       colorClass: 'is-danger',
       iconClass: 'fa-times-circle',
     },

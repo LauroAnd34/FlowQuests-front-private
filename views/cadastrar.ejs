@@ -45,6 +45,7 @@
                 </div>
 
                 <form action="/cadastrar" method="POST" class="auth-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="field">
                         <label class="label">Nome</label>
                         <div class="control has-icons-left">
@@ -64,15 +65,16 @@
                     <div class="field">
                         <label class="label">Senha</label>
                         <div class="control has-icons-left">
-                            <input name="senha" class="input" type="password" placeholder="Crie uma senha" required minlength="6">
+                            <input name="senha" class="input" type="password" placeholder="Crie uma senha forte" required minlength="8" autocomplete="new-password">
                             <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
                         </div>
+                        <p class="help">Use pelo menos 8 caracteres, com letra maiuscula, minuscula e numero.</p>
                     </div>
 
                     <div class="field">
                         <label class="label">Confirmar Senha</label>
                         <div class="control has-icons-left">
-                            <input name="confirmarSenha" class="input" type="password" placeholder="Repita sua senha" required minlength="6">
+                            <input name="confirmarSenha" class="input" type="password" placeholder="Repita sua senha" required minlength="8" autocomplete="new-password">
                             <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
                         </div>
                     </div>

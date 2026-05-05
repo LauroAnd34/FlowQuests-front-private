@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmActionTitle = document.getElementById('confirm-action-title');
   const confirmActionText = document.getElementById('confirm-action-text');
   const adminLogoutButton = document.getElementById('admin-logout-button');
+  const adminLogoutForm = document.getElementById('admin-logout-form');
 
   let pendingAction = null;
 
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   adminLogoutButton?.addEventListener('click', () => {
     pendingAction = () => {
-      window.location.href = '/logout';
+      adminLogoutForm?.submit();
     };
     confirmActionTitle.textContent = 'Encerrar sessao';
     confirmActionText.textContent = 'Deseja encerrar sua sessao de administrador agora?';

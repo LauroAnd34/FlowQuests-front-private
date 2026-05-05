@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const createTaskFromSettings = document.getElementById('create-task-from-settings');
   const openRewardsFromSettings = document.getElementById('open-rewards-from-settings');
   const openTasksFromSettings = document.getElementById('open-tasks-from-settings');
+  const logoutForm = document.getElementById('logout-form');
+  const confirmLogoutSubmitButton = document.getElementById('confirm-logout-submit-button');
+  const csrfToken = body.dataset.csrfToken || '';
 
   let taskIdToComplete = null;
   let currentUserXP = Number(body.dataset.userXp || 0);
@@ -279,6 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   cancelLogoutButton?.addEventListener('click', () => closeModal(confirmLogoutModal));
 
+  confirmLogoutSubmitButton?.addEventListener('click', () => {
+    logoutForm?.submit();
+  });
+
   confirmLogoutModal?.addEventListener('click', (event) => {
     if (event.target === confirmLogoutModal) {
       closeModal(confirmLogoutModal);
@@ -316,6 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch(`/api/tarefas/${taskIdToComplete}/completar`, {
         method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
       });
 
       if (!response.ok) {
@@ -356,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify(taskData),
       });

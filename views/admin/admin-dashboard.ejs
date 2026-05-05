@@ -12,6 +12,9 @@
 <body class="admin-page">
     <section id="main-content" class="section">
         <div class="container admin-container">
+            <form id="admin-logout-form" action="/logout" method="POST" class="is-hidden">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            </form>
             <div class="admin-header">
                 <div>
                     <p class="admin-eyebrow">Area restrita</p>
@@ -110,7 +113,9 @@
                                                 data-submit-form-id="ban-form-<%= user.id %>">
                                                 <i class="fas fa-user-slash"></i>
                                             </button>
-                                            <form id="ban-form-<%= user.id %>" action="/admin/banir/<%= user.id %>" method="POST"></form>
+                                            <form id="ban-form-<%= user.id %>" action="/admin/banir/<%= user.id %>" method="POST">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            </form>
                                         <% } %>
                                         <% if (user.statusConta === 'ATIVO') { %>
                                             <button
@@ -122,10 +127,13 @@
                                                 data-submit-form-id="block-form-<%= user.id %>">
                                                 <i class="fas fa-user-lock"></i>
                                             </button>
-                                            <form id="block-form-<%= user.id %>" action="/admin/bloquear/<%= user.id %>" method="POST"></form>
+                                            <form id="block-form-<%= user.id %>" action="/admin/bloquear/<%= user.id %>" method="POST">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            </form>
                                         <% } %>
                                         <% if (user.perfil !== 'ADMIN') { %>
                                             <form action="/admin/promover/<%= user.id %>" method="POST">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button class="button is-small is-success" title="Promover para admin" type="submit">
                                                     <i class="fas fa-arrow-up"></i>
                                                 </button>
@@ -150,7 +158,9 @@
                                             data-submit-form-id="delete-form-<%= user.id %>">
                                             <i class="fas fa-trash"></i>
                                         </button>
-                                        <form id="delete-form-<%= user.id %>" action="/admin/deletar/<%= user.id %>" method="POST"></form>
+                                        <form id="delete-form-<%= user.id %>" action="/admin/deletar/<%= user.id %>" method="POST">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -174,6 +184,7 @@
             </header>
             <section class="admin-modal-body">
                 <form id="formEditar" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="field">
                         <label class="label">Nome</label>
                         <input class="input" type="text" name="nome" id="editNome" required>
@@ -217,6 +228,7 @@
             </header>
             <section class="admin-modal-body">
                 <form id="formAdvertir" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="field">
                         <label class="label">Motivo</label>
                         <input class="input" type="text" name="motivo" id="warningMotivo" maxlength="100" required>

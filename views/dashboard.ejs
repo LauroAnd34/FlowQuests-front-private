@@ -7,7 +7,8 @@
 <body
     class="dashboard-page"
     data-user-id="<%= usuario.id %>"
-    data-user-xp="<%= gameProfile.xpTotal %>">
+    data-user-xp="<%= gameProfile.xpTotal %>"
+    data-csrf-token="<%= csrfToken %>">
     <div id="dashboard-container" class="app-container dashboard-shell">
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-inner">
@@ -122,6 +123,10 @@
                     </div>
                 </div>
             </header>
+
+            <form id="logout-form" action="/logout" method="POST" class="is-hidden">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            </form>
 
             <section id="dashboard-content" class="tab-content is-active">
                 <section class="stats-grid">
@@ -323,6 +328,7 @@
             <button class="modal-close-button" type="button" aria-label="Fechar">&times;</button>
             <h2 class="title is-4">Criar Nova Quest</h2>
             <form id="task-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="field">
                     <label class="label">Nome da Quest</label>
                     <div class="control">
@@ -384,7 +390,7 @@
             <p class="has-text-centered modal-copy">Deseja encerrar sua sessao agora?</p>
             <div class="field is-grouped is-grouped-centered">
                 <p class="control"><button id="cancel-logout-button" type="button" class="button is-light">Cancelar</button></p>
-                <p class="control"><a href="/logout" class="button is-danger">Sair</a></p>
+                <p class="control"><button id="confirm-logout-submit-button" type="button" class="button is-danger">Sair</button></p>
             </div>
         </div>
     </div>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <%- include('partials/head', {
-    title: 'FlowQuests - Recuperar Senha',
+    title: 'FlowQuests - Redefinir Senha',
     styles: ['/css/styleTelaInicial.css', '/css/styleLogin.css']
 }) %>
 <body class="auth-page auth-page-recovery" data-message="<%= message %>">
@@ -12,31 +12,42 @@
             <div class="showcase-glow showcase-glow-top"></div>
             <div class="showcase-brand">
                 <img src="/images/FlowQuests-Icon.png" alt="Logo da FlowQuests" class="showcase-logo">
-                <span class="showcase-badge">Recuperação</span>
+                <span class="showcase-badge">Seguranca</span>
             </div>
 
             <div class="showcase-copy">
-                <p class="showcase-kicker">Volte para o jogo</p>
-                <h1>Recupere seu acesso e retome sua campanha.</h1>
-                <p>Informe seu email para seguir com o fluxo de recuperação e voltar para suas missões.</p>
+                <p class="showcase-kicker">Nova senha</p>
+                <h1>Defina uma senha forte para voltar ao jogo.</h1>
+                <p>Escolha uma senha com boa combinacao de letras e numeros para proteger sua conta.</p>
             </div>
         </section>
 
         <main id="main-content" class="auth-panel">
             <div class="auth-card auth-card-elevated">
                 <div class="auth-card-header">
-                    <p class="auth-card-kicker">Senha</p>
-                    <h2>Recuperar Conta</h2>
-                    <p class="auth-card-copy">Digite o email usado no cadastro para continuarmos o processo.</p>
+                    <p class="auth-card-kicker">Recuperacao</p>
+                    <h2>Redefinir Senha</h2>
+                    <p class="auth-card-copy">Crie uma nova senha para concluir a recuperacao da conta.</p>
                 </div>
 
-                <form action="/esqueci-senha" method="POST" class="auth-form">
+                <form action="/redefinir-senha" method="POST" class="auth-form">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="token" value="<%= token %>">
+
                     <div class="field">
-                        <label class="label">Email</label>
+                        <label class="label">Nova senha</label>
                         <div class="control has-icons-left">
-                            <input name="email" class="input" type="email" placeholder="voce@email.com" required>
-                            <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
+                            <input name="senha" class="input" type="password" placeholder="Digite a nova senha" required minlength="8" autocomplete="new-password">
+                            <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                        </div>
+                        <p class="help">Use pelo menos 8 caracteres, com letra maiuscula, minuscula e numero.</p>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Confirmar nova senha</label>
+                        <div class="control has-icons-left">
+                            <input name="confirmarSenha" class="input" type="password" placeholder="Repita a nova senha" required minlength="8" autocomplete="new-password">
+                            <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
                         </div>
                     </div>
 
@@ -46,7 +57,7 @@
                         </p>
                         <p class="control is-expanded-mobile">
                             <button type="submit" class="button is-dark is-fullwidth auth-submit auth-action-button">
-                                <strong>Enviar</strong>
+                                <strong>Salvar nova senha</strong>
                             </button>
                         </p>
                     </div>

@@ -8,6 +8,7 @@ const {
   getAchievements,
   loginUser,
   registerUser,
+  resetUserPassword,
   createTask,
   completeTask,
   listUsersForAdmin,
@@ -22,12 +23,40 @@ const {
   buildDashboardViewModel,
   buildAdminDashboardViewModel,
 } = require('./lib/view-models');
+const {
+  PASSWORD_MIN_LENGTH,
+  buildHttpsServers,
+  createOpaqueToken,
+  isStrongPassword,
+  isValidEmail,
+} = require('./lib/security');
 
 const app = express();
-const port = 3000;
+const port = Number.parseInt(process.env.PORT || '3000', 10);
+const httpsPort = Number.parseInt(process.env.HTTPS_PORT || '3443', 10);
+const httpRedirectPort = Number.parseInt(process.env.HTTP_REDIRECT_PORT || '3000', 10);
+const isProduction = process.env.NODE_ENV === 'production';
+const sessionSecret = process.env.SESSION_SECRET;
+const sessionName = process.env.SESSION_COOKIE_NAME || 'flowquests.sid';
+const loginAttempts = new Map();
+const recoveryTokens = new Map();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_BLOCK_MS = 15 * 60 * 1000;
+const RECOVERY_TOKEN_TTL_MS = 30 * 60 * 1000;
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+if (isProduction && !sessionSecret) {
+  throw new Error('SESSION_SECRET obrigatorio em producao.');
+}
+
+app.disable('x-powered-by');
+
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
+app.use(express.urlencoded({ extended: false, limit: '20kb' }));
+app.use(express.json({ limit: '20kb' }));
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
@@ -37,17 +66,30 @@ app.set('view engine', 'ejs');
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'flowquests-front-secret',
+    name: sessionName,
+    secret: sessionSecret || 'flowquests-front-secret',
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: isProduction ? 'strict' : 'lax',
+      secure: isProduction,
       maxAge: 1000 * 60 * 60 * 8,
     },
   })
 );
+
+function createCsrfToken() {
+  return createOpaqueToken();
+}
+
+function ensureCsrfToken(req) {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = createCsrfToken();
+  }
+
+  return req.session.csrfToken;
+}
 
 function requireSession(req, res, next) {
   if (!req.session.userId) {
@@ -64,10 +106,6 @@ function getPageNumber(value, fallback = 0) {
 
 function isBlank(value) {
   return !String(value || '').trim();
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 }
 
 function extractApiMessage(error) {
@@ -100,6 +138,10 @@ function resolveLoginFailure(error) {
     return 'account_blocked';
   }
 
+  if (apiMessage.includes('muitas tentativas') || apiMessage.includes('rate limit')) {
+    return 'login_rate_limited';
+  }
+
   return 'login_failed';
 }
 
@@ -115,16 +157,133 @@ function resolveRegisterFailure(error) {
     return 'register_invalid_email';
   }
 
-  if (apiMessage.includes('6 caracteres') || apiMessage.includes('senha deve')) {
-    return 'register_password_short';
-  }
-
   if (apiMessage.includes('obrigat')) {
     return 'register_missing_fields';
   }
 
+  if (apiMessage.includes('8 caracteres') || apiMessage.includes('forte') || apiMessage.includes('uppercase')) {
+    return 'register_password_weak';
+  }
+
+  if (apiMessage.includes('senha deve')) {
+    return 'register_password_short';
+  }
+
   return 'register_failed';
 }
+
+function finalizeLogout(req, res) {
+  req.session.destroy(() => {
+    res.clearCookie(sessionName);
+    res.redirect('/');
+  });
+}
+
+function getLoginAttemptKey(req, email) {
+  return `${req.ip}:${String(email || '').trim().toLowerCase()}`;
+}
+
+function getLoginAttemptState(key) {
+  const state = loginAttempts.get(key);
+
+  if (!state) {
+    return null;
+  }
+
+  if (state.blockedUntil && state.blockedUntil > Date.now()) {
+    return state;
+  }
+
+  if (state.windowStartedAt + LOGIN_WINDOW_MS < Date.now()) {
+    loginAttempts.delete(key);
+    return null;
+  }
+
+  if (state.blockedUntil && state.blockedUntil <= Date.now()) {
+    loginAttempts.delete(key);
+    return null;
+  }
+
+  return state;
+}
+
+function registerLoginFailure(key) {
+  const now = Date.now();
+  const current = getLoginAttemptState(key);
+
+  if (!current) {
+    loginAttempts.set(key, {
+      count: 1,
+      windowStartedAt: now,
+      blockedUntil: null,
+    });
+    return;
+  }
+
+  current.count += 1;
+
+  if (current.count >= LOGIN_MAX_ATTEMPTS) {
+    current.blockedUntil = now + LOGIN_BLOCK_MS;
+  }
+
+  loginAttempts.set(key, current);
+}
+
+function clearLoginFailures(key) {
+  loginAttempts.delete(key);
+}
+
+function cleanupRecoveryTokens() {
+  const now = Date.now();
+
+  for (const [token, data] of recoveryTokens.entries()) {
+    if (data.expiresAt <= now || data.usedAt) {
+      recoveryTokens.delete(token);
+    }
+  }
+}
+
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  if (
+    !req.path.startsWith('/css') &&
+    !req.path.startsWith('/js') &&
+    !req.path.startsWith('/images')
+  ) {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+
+  if (isProduction && req.secure) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  next();
+});
+
+app.use((req, res, next) => {
+  const csrfToken = ensureCsrfToken(req);
+  res.locals.csrfToken = csrfToken;
+
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  const requestToken = req.body?._csrf || req.get('x-csrf-token');
+
+  if (!requestToken || requestToken !== csrfToken) {
+    if (req.path.startsWith('/api/')) {
+      return res.status(403).json({ message: 'Requisicao invalida.' });
+    }
+
+    return res.redirect('/?message=error');
+  }
+
+  next();
+});
 
 app.get('/', (req, res) => {
   res.render('index', { message: req.query.message || '' });
@@ -145,8 +304,12 @@ app.post('/cadastrar', async (req, res) => {
     return res.redirect('/cadastrar?message=register_invalid_email');
   }
 
-  if (String(senha).length < 6) {
+  if (String(senha).length < PASSWORD_MIN_LENGTH) {
     return res.redirect('/cadastrar?message=register_password_short');
+  }
+
+  if (!isStrongPassword(senha)) {
+    return res.redirect('/cadastrar?message=register_password_weak');
   }
 
   if (senha !== confirmarSenha) {
@@ -174,6 +337,24 @@ app.get('/esqueci-senha', (req, res) => {
   res.render('esqueci-senha', { message: req.query.message || '' });
 });
 
+app.get('/redefinir-senha', (req, res) => {
+  cleanupRecoveryTokens();
+  const token = String(req.query.token || '');
+  const tokenData = recoveryTokens.get(token);
+
+  if (!token || !tokenData || tokenData.expiresAt <= Date.now() || tokenData.usedAt) {
+    return res.render('redefinir-senha', {
+      message: 'reset_invalid_token',
+      token: '',
+    });
+  }
+
+  res.render('redefinir-senha', {
+    message: req.query.message || '',
+    token,
+  });
+});
+
 app.get('/conta-status', (req, res) => {
   const rawStatus = String(req.query.status || 'BLOQUEADO').toUpperCase();
   const status = ['ATIVO', 'BLOQUEADO', 'BANIDO'].includes(rawStatus)
@@ -194,13 +375,63 @@ app.post('/esqueci-senha', async (req, res) => {
     return res.redirect('/esqueci-senha?message=recovery_invalid_email');
   }
 
-  // O endpoint de recuperacao nao esta documentado no projeto.
-  // Mantemos um fluxo de UX consistente no front-end ate o back-end ser confirmado.
+  cleanupRecoveryTokens();
+
+  const recoveryToken = createOpaqueToken();
+  recoveryTokens.set(recoveryToken, {
+    email: String(email).trim().toLowerCase(),
+    expiresAt: Date.now() + RECOVERY_TOKEN_TTL_MS,
+    usedAt: null,
+  });
+
+  console.log(
+    `Link de redefinicao (modo local): http://localhost:${port}/redefinir-senha?token=${recoveryToken}`
+  );
+
   res.redirect('/?message=recovery');
+});
+
+app.post('/redefinir-senha', async (req, res) => {
+  const { token, senha, confirmarSenha } = req.body;
+
+  cleanupRecoveryTokens();
+
+  if ([token, senha, confirmarSenha].some(isBlank)) {
+    return res.redirect(`/redefinir-senha?token=${encodeURIComponent(token || '')}&message=reset_missing_fields`);
+  }
+
+  if (String(senha).length < PASSWORD_MIN_LENGTH) {
+    return res.redirect(`/redefinir-senha?token=${encodeURIComponent(token)}&message=reset_password_short`);
+  }
+
+  if (!isStrongPassword(senha)) {
+    return res.redirect(`/redefinir-senha?token=${encodeURIComponent(token)}&message=reset_password_weak`);
+  }
+
+  if (senha !== confirmarSenha) {
+    return res.redirect(`/redefinir-senha?token=${encodeURIComponent(token)}&message=password_mismatch`);
+  }
+
+  const tokenData = recoveryTokens.get(String(token));
+
+  if (!tokenData || tokenData.expiresAt <= Date.now() || tokenData.usedAt) {
+    return res.redirect('/redefinir-senha?message=reset_invalid_token');
+  }
+
+  try {
+    await resetUserPassword(tokenData.email, senha);
+    tokenData.usedAt = Date.now();
+    recoveryTokens.set(String(token), tokenData);
+    res.redirect('/?message=reset_success');
+  } catch (error) {
+    res.redirect(`/redefinir-senha?token=${encodeURIComponent(token)}&message=reset_failed`);
+  }
 });
 
 app.post('/login', async (req, res) => {
   const { email, senha } = req.body;
+  const loginAttemptKey = getLoginAttemptKey(req, email);
+  const loginAttemptState = getLoginAttemptState(loginAttemptKey);
 
   if ([email, senha].some(isBlank)) {
     return res.redirect('/?message=login_missing_fields');
@@ -210,12 +441,25 @@ app.post('/login', async (req, res) => {
     return res.redirect('/?message=login_invalid_email');
   }
 
+  if (loginAttemptState?.blockedUntil && loginAttemptState.blockedUntil > Date.now()) {
+    return res.redirect('/?message=login_rate_limited');
+  }
+
   try {
     const user = await loginUser(req.body);
-    req.session.userId = user.id;
-    res.redirect('/dashboard');
+    req.session.regenerate((sessionError) => {
+      if (sessionError) {
+        return res.redirect('/?message=error');
+      }
+
+      req.session.userId = user.id;
+      req.session.csrfToken = createCsrfToken();
+      clearLoginFailures(loginAttemptKey);
+      res.redirect('/dashboard');
+    });
   } catch (error) {
     const failureMessage = resolveLoginFailure(error);
+    registerLoginFailure(loginAttemptKey);
 
     if (failureMessage === 'account_banned') {
       return res.redirect('/conta-status?status=BANIDO');
@@ -230,9 +474,11 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/');
-  });
+  res.redirect(req.session.userId ? '/dashboard' : '/');
+});
+
+app.post('/logout', (req, res) => {
+  finalizeLogout(req, res);
 });
 
 app.get('/dashboard', requireSession, async (req, res) => {
@@ -380,6 +626,17 @@ app.post('/admin/banir/:id', requireSession, async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Servidor Node.js rodando em http://localhost:${port}`);
+const { protocol, server, redirectServer } = buildHttpsServers(app, {
+  httpsPort,
 });
+
+server.listen(protocol === 'https' ? httpsPort : port, () => {
+  const activePort = protocol === 'https' ? httpsPort : port;
+  console.log(`Servidor Node.js rodando em ${protocol}://localhost:${activePort}`);
+});
+
+if (redirectServer) {
+  redirectServer.listen(httpRedirectPort, () => {
+    console.log(`Servidor de redirecionamento HTTP rodando em http://localhost:${httpRedirectPort}`);
+  });
+}
