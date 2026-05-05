@@ -62,6 +62,70 @@ function getPageNumber(value, fallback = 0) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
+function isBlank(value) {
+  return !String(value || '').trim();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+function extractApiMessage(error) {
+  const data = error.response?.data;
+
+  if (typeof data === 'string') {
+    return data.toLowerCase();
+  }
+
+  if (typeof data?.message === 'string') {
+    return data.message.toLowerCase();
+  }
+
+  return String(error.message || '').toLowerCase();
+}
+
+function resolveLoginFailure(error) {
+  const apiMessage = extractApiMessage(error);
+  const status = String(error.response?.data?.statusConta || '').toUpperCase();
+
+  if (status === 'BANIDO' || apiMessage.includes('banid')) {
+    return 'account_banned';
+  }
+
+  if (status === 'BLOQUEADO' || apiMessage.includes('bloque')) {
+    return 'account_blocked';
+  }
+
+  if (apiMessage.includes('inativ') || apiMessage.includes('suspens')) {
+    return 'account_blocked';
+  }
+
+  return 'login_failed';
+}
+
+function resolveRegisterFailure(error) {
+  const apiMessage = extractApiMessage(error);
+  const status = error.response?.status;
+
+  if (status === 409 || apiMessage.includes('ja cadastrad') || apiMessage.includes('already')) {
+    return 'email_in_use';
+  }
+
+  if (apiMessage.includes('email inval') || apiMessage.includes('invalid email')) {
+    return 'register_invalid_email';
+  }
+
+  if (apiMessage.includes('6 caracteres') || apiMessage.includes('senha deve')) {
+    return 'register_password_short';
+  }
+
+  if (apiMessage.includes('obrigat')) {
+    return 'register_missing_fields';
+  }
+
+  return 'register_failed';
+}
+
 app.get('/', (req, res) => {
   res.render('index', { message: req.query.message || '' });
 });
@@ -72,6 +136,18 @@ app.get('/cadastrar', (req, res) => {
 
 app.post('/cadastrar', async (req, res) => {
   const { nome, email, senha, confirmarSenha } = req.body;
+
+  if ([nome, email, senha, confirmarSenha].some(isBlank)) {
+    return res.redirect('/cadastrar?message=register_missing_fields');
+  }
+
+  if (!isValidEmail(email)) {
+    return res.redirect('/cadastrar?message=register_invalid_email');
+  }
+
+  if (String(senha).length < 6) {
+    return res.redirect('/cadastrar?message=register_password_short');
+  }
 
   if (senha !== confirmarSenha) {
     return res.redirect('/cadastrar?message=password_mismatch');
@@ -90,7 +166,7 @@ app.post('/cadastrar', async (req, res) => {
       stack: error.stack?.split('\n').slice(0, 3).join(' | '),
       apiUrl: process.env.API_URL || 'http://127.0.0.1:8080/api (fallback localhost)',
     });
-    res.redirect('/cadastrar?message=register_failed');
+    res.redirect(`/cadastrar?message=${resolveRegisterFailure(error)}`);
   }
 });
 
@@ -108,18 +184,48 @@ app.get('/conta-status', (req, res) => {
 });
 
 app.post('/esqueci-senha', async (req, res) => {
+  const { email } = req.body;
+
+  if (isBlank(email)) {
+    return res.redirect('/esqueci-senha?message=recovery_missing_email');
+  }
+
+  if (!isValidEmail(email)) {
+    return res.redirect('/esqueci-senha?message=recovery_invalid_email');
+  }
+
   // O endpoint de recuperacao nao esta documentado no projeto.
   // Mantemos um fluxo de UX consistente no front-end ate o back-end ser confirmado.
   res.redirect('/?message=recovery');
 });
 
 app.post('/login', async (req, res) => {
+  const { email, senha } = req.body;
+
+  if ([email, senha].some(isBlank)) {
+    return res.redirect('/?message=login_missing_fields');
+  }
+
+  if (!isValidEmail(email)) {
+    return res.redirect('/?message=login_invalid_email');
+  }
+
   try {
     const user = await loginUser(req.body);
     req.session.userId = user.id;
     res.redirect('/dashboard');
   } catch (error) {
-    res.redirect('/?message=login_failed');
+    const failureMessage = resolveLoginFailure(error);
+
+    if (failureMessage === 'account_banned') {
+      return res.redirect('/conta-status?status=BANIDO');
+    }
+
+    if (failureMessage === 'account_blocked') {
+      return res.redirect('/conta-status?status=BLOQUEADO');
+    }
+
+    res.redirect(`/?message=${failureMessage}`);
   }
 });
 
