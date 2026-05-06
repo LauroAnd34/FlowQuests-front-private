@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const body = document.body;
   const editModal = document.getElementById('modalEditar');
   const warningModal = document.getElementById('modalAdvertir');
   const warningHistoryModal = document.getElementById('modalHistoricoAdvertencias');
@@ -27,8 +28,65 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmActionText = document.getElementById('confirm-action-text');
   const adminLogoutButton = document.getElementById('admin-logout-button');
   const adminLogoutForm = document.getElementById('admin-logout-form');
+  const toast = document.getElementById('admin-toast');
+  const toastCard = document.getElementById('admin-toast-card');
+  const toastIcon = document.getElementById('admin-toast-icon');
+  const toastTitle = document.getElementById('admin-toast-title');
+  const toastText = document.getElementById('admin-toast-text');
+  const pageMessage = body.dataset.message || '';
+
+  const messageMap = {
+    admin_user_promoted: ['is-success', 'Perfil promovido', 'O usuario agora tambem tem acesso administrativo.'],
+    admin_user_updated: ['is-success', 'Conta atualizada', 'Os dados do usuario foram atualizados com sucesso.'],
+    admin_user_deleted: ['is-success', 'Conta excluida', 'O usuario foi removido do sistema e seus dados vinculados foram limpos no modo local.'],
+    admin_warning_created: ['is-warning', 'Advertencia registrada', 'A moderacao foi aplicada e o historico do usuario foi atualizado.'],
+    admin_user_blocked: ['is-warning', 'Conta bloqueada', 'O acesso do usuario foi interrompido ate revisao administrativa.'],
+    admin_user_banned: ['is-error', 'Conta banida', 'A conta foi marcada como banida no sistema.'],
+    admin_action_failed: ['is-error', 'Falha na moderacao', 'Nao foi possivel concluir a acao administrativa agora.'],
+  };
 
   let pendingAction = null;
+
+  function showToast(type, title, message) {
+    if (!toast || !toastCard || !toastIcon || !toastTitle || !toastText) {
+      return;
+    }
+
+    toastCard.classList.remove('is-success', 'is-error', 'is-warning');
+    toastCard.classList.add(type);
+
+    let iconClass = 'fa-circle-info';
+
+    if (type === 'is-success') {
+      iconClass = 'fa-circle-check';
+    } else if (type === 'is-error') {
+      iconClass = 'fa-circle-xmark';
+    } else if (type === 'is-warning') {
+      iconClass = 'fa-triangle-exclamation';
+    }
+
+    toastIcon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+    toastTitle.textContent = title;
+    toastText.textContent = message;
+    toast.classList.add('is-visible');
+    toast.setAttribute('aria-hidden', 'false');
+
+    window.clearTimeout(showToast.timeoutId);
+    showToast.timeoutId = window.setTimeout(() => {
+      toast.classList.remove('is-visible');
+      toast.setAttribute('aria-hidden', 'true');
+    }, 3600);
+  }
+
+  function showPageMessageIfNeeded() {
+    const feedback = messageMap[pageMessage];
+
+    if (!feedback) {
+      return;
+    }
+
+    showToast(feedback[0], feedback[1], feedback[2]);
+  }
 
   function openModal(modal) {
     modal?.classList.add('is-active');
@@ -47,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal(confirmModal);
     pendingAction = null;
   }
+
+  showPageMessageIfNeeded();
 
   editButtons.forEach((button) => {
     button.addEventListener('click', () => {

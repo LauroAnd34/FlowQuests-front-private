@@ -6,11 +6,15 @@ const {
   getUserProfile,
   getUserTasksByState,
   getAchievements,
+  listUsersRanking,
   loginUser,
   registerUser,
   resetUserPassword,
+  updateOwnProfile,
   createTask,
   completeTask,
+  requestRewardRedemption,
+  confirmRewardRedemption,
   listUsersForAdmin,
   promoteUserToAdmin,
   updateUserAsAdmin,
@@ -30,6 +34,7 @@ const {
   isStrongPassword,
   isValidEmail,
 } = require('./lib/security');
+const { sendRecoveryEmail } = require('./lib/recovery-mail');
 
 const app = express();
 const port = Number.parseInt(process.env.PORT || '3000', 10);
@@ -44,6 +49,7 @@ const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_BLOCK_MS = 15 * 60 * 1000;
 const RECOVERY_TOKEN_TTL_MS = 30 * 60 * 1000;
+const dashboardTabs = new Set(['dashboard', 'tarefas', 'concluidas', 'recompensas', 'configuracoes']);
 
 if (isProduction && !sessionSecret) {
   throw new Error('SESSION_SECRET obrigatorio em producao.');
@@ -102,6 +108,10 @@ function requireSession(req, res, next) {
 function getPageNumber(value, fallback = 0) {
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function getDashboardTab(value, fallback = 'dashboard') {
+  return dashboardTabs.has(value) ? value : fallback;
 }
 
 function isBlank(value) {
@@ -170,6 +180,37 @@ function resolveRegisterFailure(error) {
   }
 
   return 'register_failed';
+}
+
+function resolveAccountUpdateFailure(error) {
+  const apiMessage = extractApiMessage(error);
+  const status = error.response?.status;
+
+  if (status === 409 || apiMessage.includes('ja cadastrad')) {
+    return 'account_email_in_use';
+  }
+
+  if (status === 401 || apiMessage.includes('senha atual invalida')) {
+    return 'account_current_password_invalid';
+  }
+
+  if (apiMessage.includes('senha atual obrigatoria')) {
+    return 'account_current_password_required';
+  }
+
+  if (apiMessage.includes('email inval')) {
+    return 'account_invalid_email';
+  }
+
+  if (apiMessage.includes('8 caracteres')) {
+    return 'account_password_short';
+  }
+
+  if (apiMessage.includes('forte') || apiMessage.includes('uppercase')) {
+    return 'account_password_weak';
+  }
+
+  return 'account_update_failed';
 }
 
 function finalizeLogout(req, res) {
@@ -378,17 +419,26 @@ app.post('/esqueci-senha', async (req, res) => {
   cleanupRecoveryTokens();
 
   const recoveryToken = createOpaqueToken();
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const resetLink = `http://localhost:${port}/redefinir-senha?token=${recoveryToken}`;
   recoveryTokens.set(recoveryToken, {
-    email: String(email).trim().toLowerCase(),
+    email: normalizedEmail,
     expiresAt: Date.now() + RECOVERY_TOKEN_TTL_MS,
     usedAt: null,
   });
 
-  console.log(
-    `Link de redefinicao (modo local): http://localhost:${port}/redefinir-senha?token=${recoveryToken}`
-  );
+  try {
+    const delivery = await sendRecoveryEmail({
+      email: normalizedEmail,
+      resetLink,
+    });
 
-  res.redirect('/?message=recovery');
+    const message = delivery.mode === 'webhook' ? 'recovery_sent' : 'recovery_preview';
+    res.redirect(`/?message=${message}`);
+  } catch (error) {
+    console.error('Falha ao enviar email de recuperacao:', error.message);
+    res.redirect('/esqueci-senha?message=recovery_delivery_failed');
+  }
 });
 
 app.post('/redefinir-senha', async (req, res) => {
@@ -486,14 +536,17 @@ app.get('/dashboard', requireSession, async (req, res) => {
   const search = (req.query.search || '').trim();
   const pendingPage = getPageNumber(req.query.pending_page);
   const completedPage = getPageNumber(req.query.completed_page);
+  const initialTab = getDashboardTab(req.query.tab, 'dashboard');
+  const message = String(req.query.message || '');
 
   try {
-    const [usuario, tarefasPendentesRaw, tarefasConcluidasRaw, conquistas] =
+    const [usuario, tarefasPendentesRaw, tarefasConcluidasRaw, conquistas, rankingUsuarios] =
       await Promise.all([
         getUserProfile(userId),
         getUserTasksByState(userId, 'pendente'),
         getUserTasksByState(userId, 'concluida'),
         getAchievements(userId),
+        listUsersRanking(userId),
       ]);
 
     if (usuario.statusConta && usuario.statusConta !== 'ATIVO') {
@@ -508,14 +561,59 @@ app.get('/dashboard', requireSession, async (req, res) => {
       tarefasPendentesRaw,
       tarefasConcluidasRaw,
       conquistas,
+      rankingUsuarios,
       search,
       pendingPage,
       completedPage,
+      initialTab,
+      message,
     });
 
     res.render('dashboard', viewModel);
   } catch (error) {
     res.redirect('/?message=error');
+  }
+});
+
+app.post('/conta/atualizar', requireSession, async (req, res) => {
+  const { nome, email, senhaAtual, novaSenha, confirmarNovaSenha } = req.body;
+
+  if ([nome, email].some(isBlank)) {
+    return res.redirect('/dashboard?tab=configuracoes&message=account_missing_fields');
+  }
+
+  if (!isValidEmail(email)) {
+    return res.redirect('/dashboard?tab=configuracoes&message=account_invalid_email');
+  }
+
+  if (novaSenha || confirmarNovaSenha) {
+    if (isBlank(senhaAtual)) {
+      return res.redirect('/dashboard?tab=configuracoes&message=account_current_password_required');
+    }
+
+    if (String(novaSenha).length < PASSWORD_MIN_LENGTH) {
+      return res.redirect('/dashboard?tab=configuracoes&message=account_password_short');
+    }
+
+    if (!isStrongPassword(novaSenha)) {
+      return res.redirect('/dashboard?tab=configuracoes&message=account_password_weak');
+    }
+
+    if (novaSenha !== confirmarNovaSenha) {
+      return res.redirect('/dashboard?tab=configuracoes&message=password_mismatch');
+    }
+  }
+
+  try {
+    await updateOwnProfile(req.session.userId, {
+      nome,
+      email,
+      senhaAtual,
+      novaSenha,
+    });
+    res.redirect('/dashboard?tab=configuracoes&message=account_updated');
+  } catch (error) {
+    res.redirect(`/dashboard?tab=configuracoes&message=${resolveAccountUpdateFailure(error)}`);
   }
 });
 
@@ -543,8 +641,33 @@ app.post('/api/tarefas/:id/completar', requireSession, async (req, res) => {
   }
 });
 
+app.post('/api/recompensas/:id/solicitar', requireSession, async (req, res) => {
+  try {
+    const claim = await requestRewardRedemption(req.session.userId, req.params.id);
+    res.json(claim);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    res.status(status).json({
+      message: error.response?.data?.message || 'Nao foi possivel solicitar o resgate.',
+    });
+  }
+});
+
+app.post('/api/recompensas/:id/confirmar', requireSession, async (req, res) => {
+  try {
+    const claim = await confirmRewardRedemption(req.session.userId, req.params.id);
+    res.json(claim);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    res.status(status).json({
+      message: error.response?.data?.message || 'Nao foi possivel confirmar o resgate.',
+    });
+  }
+});
+
 app.get('/admin/painel', requireSession, async (req, res) => {
   const adminId = req.session.userId;
+  const message = String(req.query.message || '');
 
   try {
     const [admin, usuarios] = await Promise.all([
@@ -558,7 +681,7 @@ app.get('/admin/painel', requireSession, async (req, res) => {
 
     res.render(
       'admin/admin-dashboard',
-      buildAdminDashboardViewModel({ admin, usuarios })
+      buildAdminDashboardViewModel({ admin, usuarios, message })
     );
   } catch (error) {
     res.redirect('/dashboard');
@@ -572,27 +695,27 @@ app.get('/admin/admin-dashboard', (req, res) => {
 app.post('/admin/promover/:id', requireSession, async (req, res) => {
   try {
     await promoteUserToAdmin(req.session.userId, req.params.id);
-    res.redirect('/admin/painel');
+    res.redirect('/admin/painel?message=admin_user_promoted');
   } catch (error) {
-    res.status(500).send('Erro ao promover usuario.');
+    res.redirect('/admin/painel?message=admin_action_failed');
   }
 });
 
 app.post('/admin/editar/:id', requireSession, async (req, res) => {
   try {
     await updateUserAsAdmin(req.session.userId, req.params.id, req.body);
-    res.redirect('/admin/painel');
+    res.redirect('/admin/painel?message=admin_user_updated');
   } catch (error) {
-    res.status(500).send('Erro ao editar usuario.');
+    res.redirect('/admin/painel?message=admin_action_failed');
   }
 });
 
 app.post('/admin/deletar/:id', requireSession, async (req, res) => {
   try {
     await deleteUserAsAdmin(req.session.userId, req.params.id);
-    res.redirect('/admin/painel');
+    res.redirect('/admin/painel?message=admin_user_deleted');
   } catch (error) {
-    res.status(500).send('Erro ao deletar usuario.');
+    res.redirect('/admin/painel?message=admin_action_failed');
   }
 });
 
@@ -602,27 +725,27 @@ app.post('/admin/advertir/:id', requireSession, async (req, res) => {
       motivo: req.body.motivo,
       detalhamento: req.body.detalhamento,
     });
-    res.redirect('/admin/painel');
+    res.redirect('/admin/painel?message=admin_warning_created');
   } catch (error) {
-    res.status(500).send('Erro ao advertir usuario.');
+    res.redirect('/admin/painel?message=admin_action_failed');
   }
 });
 
 app.post('/admin/bloquear/:id', requireSession, async (req, res) => {
   try {
     await blockUserAsAdmin(req.session.userId, req.params.id);
-    res.redirect('/admin/painel');
+    res.redirect('/admin/painel?message=admin_user_blocked');
   } catch (error) {
-    res.status(500).send('Erro ao bloquear usuario.');
+    res.redirect('/admin/painel?message=admin_action_failed');
   }
 });
 
 app.post('/admin/banir/:id', requireSession, async (req, res) => {
   try {
     await banUserAsAdmin(req.session.userId, req.params.id);
-    res.redirect('/admin/painel');
+    res.redirect('/admin/painel?message=admin_user_banned');
   } catch (error) {
-    res.status(500).send('Erro ao banir usuario.');
+    res.redirect('/admin/painel?message=admin_action_failed');
   }
 });
 

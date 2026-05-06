@@ -8,7 +8,9 @@
     class="dashboard-page"
     data-user-id="<%= usuario.id %>"
     data-user-xp="<%= gameProfile.xpTotal %>"
-    data-csrf-token="<%= csrfToken %>">
+    data-csrf-token="<%= csrfToken %>"
+    data-message="<%= message || '' %>"
+    data-initial-tab="<%= initialTab || 'dashboard' %>">
     <div id="dashboard-container" class="app-container dashboard-shell">
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-inner">
@@ -27,7 +29,7 @@
                         <div class="avatar"><%= (usuario.nome || 'U').charAt(0).toUpperCase() %></div>
                         <div class="profile-box-copy">
                             <p class="profile-name"><%= usuario.nome %></p>
-                            <p class="profile-level">LVL <%= gameProfile.level %> • <%= gameProfile.playerTitle %></p>
+                            <p class="profile-level">LVL <%= gameProfile.level %> &middot; <%= gameProfile.playerTitle %></p>
                             <div class="xp-bar-mini">
                                 <div
                                     id="xp-progress-bar"
@@ -45,6 +47,7 @@
                                 <li><a href="#" data-dashboard-shortcut="dashboard"><span class="icon"><i class="fas fa-chart-line"></i></span> Seu progresso</a></li>
                                 <li><a href="#" data-dashboard-shortcut="recompensas"><span class="icon"><i class="fas fa-trophy"></i></span> Conquistas</a></li>
                                 <li><a href="#" data-dashboard-shortcut="tarefas"><span class="icon"><i class="fas fa-list-check"></i></span> Missoes</a></li>
+                                <li><a href="#" data-dashboard-shortcut="configuracoes"><span class="icon"><i class="fas fa-user-gear"></i></span> Minha conta</a></li>
                                 <% if (usuario.perfil === 'ADMIN') { %>
                                     <li>
                                         <a href="/admin/painel" class="has-text-danger has-text-weight-bold">
@@ -91,26 +94,28 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <h1 id="greeting-heading" data-user-name="<%= usuario.nome %>">Ola, <%= usuario.nome %></h1>
-                    <p>Seu progresso hoje esta forte. Vamos transformar a rotina em uma campanha bem mais agradavel.</p>
+                    <p>Seu progresso hoje esta forte. Agora voce tem historico, ranking real, inventario funcional e ajustes da sua conta no mesmo lugar.</p>
                 </div>
 
                 <div class="header-actions">
-                    <div id="notification-button" class="notification-icon-wrapper">
+                    <button id="notification-button" class="notification-icon-wrapper" type="button">
                         <span class="notification-chip">
                             <i class="fas fa-bell"></i>
-                            <span id="notification-badge" class="badge is-danger">1</span>
+                            <span id="notification-badge" class="badge is-danger"><%= notifications.length %></span>
                         </span>
                         <div id="notification-menu" class="notification-menu">
-                            <div class="notification-menu-header">Notificacoes</div>
-                            <div class="notification-item">
-                                <span class="icon"><i class="fas fa-sparkles"></i></span>
-                                <p>
-                                    <strong>Quest pronta para avancar.</strong>
-                                    <span>Concluir a proxima missao rende XP para o nivel <%= gameProfile.level + 1 %>.</span>
-                                </p>
-                            </div>
+                            <div class="notification-menu-header">Notificacoes internas</div>
+                            <% notifications.forEach((item) => { %>
+                                <div class="notification-item">
+                                    <span class="icon tone-<%= item.tone %>"><i class="<%= item.icon %>"></i></span>
+                                    <p>
+                                        <strong><%= item.title %></strong>
+                                        <span><%= item.text %></span>
+                                    </p>
+                                </div>
+                            <% }) %>
                         </div>
-                    </div>
+                    </button>
 
                     <div class="profile-box profile-box-header">
                         <div class="avatar"><%= (usuario.nome || 'U').charAt(0).toUpperCase() %></div>
@@ -140,7 +145,7 @@
                     </article>
                     <article class="stat-card">
                         <span>Streaks</span>
-                        <h3><%= Math.max(1, gameProfile.completedCount) %> Dias</h3>
+                        <h3><%= Math.max(1, gameProfile.streak || 0) %> Dia(s)</h3>
                     </article>
                 </section>
 
@@ -148,7 +153,7 @@
                     <article class="overview-card">
                         <p class="overview-eyebrow">Foco do dia</p>
                         <h2><%= gameProfile.dailyFocus %></h2>
-                        <p class="overview-copy">Comece pelo objetivo mais valioso do momento e mantenha seu ritmo de progresso.</p>
+                        <p class="overview-copy">Comece pelo objetivo mais valioso do momento e use o historico logo abaixo para ajustar seu ritmo semanal.</p>
                     </article>
 
                     <article class="overview-card overview-card-accent">
@@ -163,9 +168,64 @@
                                 <span>Ver conquistas</span>
                             </button>
                             <button type="button" class="overview-action" data-dashboard-shortcut-button="configuracoes">
-                                <i class="fas fa-sliders"></i>
-                                <span>Ajustar leitura</span>
+                                <i class="fas fa-user-gear"></i>
+                                <span>Editar conta</span>
                             </button>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="dashboard-panel-grid">
+                    <article class="dashboard-panel dashboard-panel-chart">
+                        <div class="dashboard-panel-header">
+                            <div>
+                                <p class="overview-eyebrow">Relatorio semanal</p>
+                                <h3>Produtividade dos ultimos 7 dias</h3>
+                            </div>
+                            <strong><%= productivityHistory.totalCompleted %> quests</strong>
+                        </div>
+                        <div class="chart-bars">
+                            <% productivityHistory.lastSevenDays.forEach((day) => { %>
+                                <div class="chart-bar-item">
+                                    <div class="chart-bar-track">
+                                        <div class="chart-bar-fill" style="height: <%= day.heightPercent %>%"></div>
+                                    </div>
+                                    <strong><%= day.completed %></strong>
+                                    <span><%= day.label %></span>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </article>
+
+                    <article class="dashboard-panel dashboard-panel-report">
+                        <div class="dashboard-panel-header">
+                            <div>
+                                <p class="overview-eyebrow">Resumo</p>
+                                <h3>Indicadores da campanha</h3>
+                            </div>
+                        </div>
+                        <div class="report-list">
+                            <div class="report-item">
+                                <span>XP recebido</span>
+                                <strong><%= productivityHistory.totalXpEarned %> XP</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Missoes atrasadas</span>
+                                <strong><%= productivityHistory.overdueCount %></strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Missoes proximas</span>
+                                <strong><%= productivityHistory.upcomingCount %></strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Taxa de conclusao</span>
+                                <strong><%= gameProfile.completionRate %>%</strong>
+                            </div>
+                        </div>
+                        <div class="category-pills">
+                            <% productivityHistory.categoryBreakdown.forEach((item) => { %>
+                                <span class="category-pill"><%= item.label %>: <strong><%= item.total %></strong></span>
+                            <% }) %>
                         </div>
                     </article>
                 </section>
@@ -175,6 +235,7 @@
                 <div class="section-header">
                     <h2 class="section-title"><i class="fas fa-scroll"></i> MISSOES DISPONIVEIS</h2>
                     <form action="/dashboard" method="GET" class="search-form">
+                        <input type="hidden" name="tab" value="tarefas">
                         <input type="hidden" name="pending_page" value="0">
                         <input type="hidden" name="completed_page" value="0">
                         <div class="field has-addons">
@@ -199,11 +260,11 @@
                     <% } %>
 
                     <% tarefasPendentes.content.forEach((tarefa, index) => { %>
-                        <article class="quest-card task-card <%= tarefa.category %>" style="animation-delay: <%= (index + 1) * 0.08 %>s">
+                        <article class="quest-card task-card <%= tarefa.categoryTone %>" style="animation-delay: <%= (index + 1) * 0.08 %>s">
                             <div class="quest-info">
                                 <span class="quest-tag"><%= tarefa.categoryLabel %></span>
                                 <h4><%= tarefa.title %></h4>
-                                <p>Dificuldade: <%= tarefa.status.text %> • <%= tarefa.dateLabel %> as <%= tarefa.timeLabel %></p>
+                                <p>Dificuldade: <%= tarefa.status.text %> &middot; <%= tarefa.dateLabel %> as <%= tarefa.timeLabel %></p>
                             </div>
                             <div class="quest-actions">
                                 <div class="xp-reward">+ <%= tarefa.rewardXp %> XP</div>
@@ -215,13 +276,13 @@
 
                 <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginacao de missoes disponiveis">
                     <a
-                        href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number - 1 %>&completed_page=<%= completedPage.number %>"
+                        href="/dashboard?tab=tarefas&search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number - 1 %>&completed_page=<%= completedPage.number %>"
                         class="pagination-previous"
                         <%= pendingPage.first ? 'disabled' : '' %>>
                         Anterior
                     </a>
                     <a
-                        href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number + 1 %>&completed_page=<%= completedPage.number %>"
+                        href="/dashboard?tab=tarefas&search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number + 1 %>&completed_page=<%= completedPage.number %>"
                         class="pagination-next"
                         <%= pendingPage.last ? 'disabled' : '' %>>
                         Proxima
@@ -233,36 +294,71 @@
             </section>
 
             <section id="concluidas-content" class="tab-content">
-                <h2 class="section-title"><i class="fas fa-circle-check"></i> RANKING DE MISSOES CONCLUIDAS</h2>
-                <div class="quests-list">
-                    <% if (tarefasConcluidas.content.length === 0) { %>
-                        <article class="empty-state-card">
-                            <h3>Nenhuma missao concluida</h3>
-                            <p>Assim que voce finalizar quests, elas aparecerao aqui.</p>
-                        </article>
-                    <% } %>
-
-                    <% tarefasConcluidas.content.forEach((tarefa, index) => { %>
-                        <article class="quest-card task-card completed-card <%= tarefa.category %>" style="animation-delay: <%= (index + 1) * 0.08 %>s">
-                            <div class="quest-info">
-                                <span class="quest-tag"><%= tarefa.categoryLabel %></span>
-                                <h4><%= tarefa.title %></h4>
-                                <p>Concluida em <%= tarefa.dateLabel %> • recompensa recebida</p>
-                            </div>
-                            <div class="xp-reward">+ <%= tarefa.rewardXp %> XP</div>
-                        </article>
-                    <% }) %>
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-ranking-star"></i> RANKING E HISTORICO</h2>
                 </div>
 
-                <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginacao de missoes concluidas">
+                <section class="ranking-shell">
+                    <article class="dashboard-panel leaderboard-panel">
+                        <div class="dashboard-panel-header">
+                            <div>
+                                <p class="overview-eyebrow">Leaderboard</p>
+                                <h3>Ranking real por XP</h3>
+                            </div>
+                            <strong><%= leaderboard.length %> jogadores</strong>
+                        </div>
+                        <div class="leaderboard-list">
+                            <% leaderboard.forEach((player) => { %>
+                                <article class="leaderboard-card <%= player.isCurrentUser ? 'is-current-user' : '' %>">
+                                    <div class="leaderboard-position">#<%= player.position %></div>
+                                    <div class="leaderboard-copy">
+                                        <strong><%= player.nome %></strong>
+                                        <span>LVL <%= player.level %> &middot; <%= player.perfil %></span>
+                                    </div>
+                                    <div class="leaderboard-score"><%= player.xpTotal.toLocaleString('pt-BR') %> XP</div>
+                                </article>
+                            <% }) %>
+                        </div>
+                    </article>
+
+                    <article class="dashboard-panel history-panel">
+                        <div class="dashboard-panel-header">
+                            <div>
+                                <p class="overview-eyebrow">Linha do tempo</p>
+                                <h3>Historico de produtividade</h3>
+                            </div>
+                        </div>
+                        <div class="quests-list compact-list">
+                            <% if (tarefasConcluidas.content.length === 0) { %>
+                                <article class="empty-state-card">
+                                    <h3>Nenhuma missao concluida</h3>
+                                    <p>Assim que voce finalizar quests, elas aparecerao aqui.</p>
+                                </article>
+                            <% } %>
+
+                            <% tarefasConcluidas.content.forEach((tarefa, index) => { %>
+                                <article class="quest-card task-card completed-card <%= tarefa.categoryTone %>" style="animation-delay: <%= (index + 1) * 0.08 %>s">
+                                    <div class="quest-info">
+                                        <span class="quest-tag"><%= tarefa.categoryLabel %></span>
+                                        <h4><%= tarefa.title %></h4>
+                                        <p>Concluida em <%= tarefa.completedAtLabel %></p>
+                                    </div>
+                                    <div class="xp-reward">+ <%= tarefa.rewardXp %> XP</div>
+                                </article>
+                            <% }) %>
+                        </div>
+                    </article>
+                </section>
+
+                <nav class="pagination is-centered mt-5" role="navigation" aria-label="Paginacao do historico de missoes concluidas">
                     <a
-                        href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number %>&completed_page=<%= completedPage.number - 1 %>"
+                        href="/dashboard?tab=concluidas&search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number %>&completed_page=<%= completedPage.number - 1 %>"
                         class="pagination-previous"
                         <%= completedPage.first ? 'disabled' : '' %>>
                         Anterior
                     </a>
                     <a
-                        href="/dashboard?search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number %>&completed_page=<%= completedPage.number + 1 %>"
+                        href="/dashboard?tab=concluidas&search=<%= encodeURIComponent(search) %>&pending_page=<%= pendingPage.number %>&completed_page=<%= completedPage.number + 1 %>"
                         class="pagination-next"
                         <%= completedPage.last ? 'disabled' : '' %>>
                         Proxima
@@ -274,13 +370,28 @@
             </section>
 
             <section id="recompensas-content" class="tab-content">
-                <h2 class="section-title"><i class="fas fa-award"></i> INVENTARIO DE CONQUISTAS</h2>
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-award"></i> INVENTARIO DE CONQUISTAS</h2>
+                </div>
                 <div class="rewards-grid">
                     <% todasAsConquistas.forEach((conquista) => { %>
                         <article class="reward-card <%= conquista.unlocked ? 'unlocked' : '' %>">
                             <span class="icon"><i class="<%= conquista.icone %>"></i></span>
+                            <div class="reward-status-badge status-<%= conquista.rewardStatus %>">
+                                <%= conquista.rewardStatus === 'resgatada' ? 'Resgatada' : (conquista.rewardStatus === 'pendente' ? 'Pendente' : (conquista.rewardStatus === 'disponivel' ? 'Disponivel' : 'Bloqueada')) %>
+                            </div>
                             <h4><%= conquista.nome %></h4>
                             <p><%= conquista.descricao %></p>
+                            <p class="reward-extra"><strong>Recompensa:</strong> <%= conquista.recompensa || 'Bonus cosmetico de campanha' %></p>
+                            <% if (conquista.rewardStatus === 'disponivel') { %>
+                                <button type="button" class="reward-action-button" data-reward-action="solicitar" data-reward-id="<%= conquista.id %>">Solicitar resgate</button>
+                            <% } else if (conquista.rewardStatus === 'pendente') { %>
+                                <button type="button" class="reward-action-button is-secondary" data-reward-action="confirmar" data-reward-id="<%= conquista.id %>">Confirmar recebimento</button>
+                            <% } else if (conquista.rewardStatus === 'resgatada') { %>
+                                <p class="reward-meta">Recebida em <%= conquista.redeemedAt ? new Date(conquista.redeemedAt).toLocaleDateString('pt-BR') : 'data registrada' %></p>
+                            <% } else { %>
+                                <p class="reward-meta">Complete a conquista para liberar o resgate.</p>
+                            <% } %>
                         </article>
                     <% }) %>
                 </div>
@@ -288,13 +399,46 @@
 
             <section id="configuracoes-content" class="tab-content">
                 <h2 class="section-title"><i class="fas fa-gear"></i> AJUSTES DE EXPERIENCIA</h2>
-                <div class="settings-grid">
+                <div class="settings-grid settings-grid-expanded">
+                    <article class="settings-card settings-card-form">
+                        <p class="settings-eyebrow">Minha conta</p>
+                        <h3>Autogestao de perfil</h3>
+                        <p>Atualize nome, email e senha com validacao segura sem sair do dashboard.</p>
+                        <form action="/conta/atualizar" method="POST" class="account-settings-form">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <div class="field">
+                                <label class="label">Nome</label>
+                                <input class="input" type="text" name="nome" value="<%= usuario.nome %>" required>
+                            </div>
+                            <div class="field">
+                                <label class="label">Email</label>
+                                <input class="input" type="email" name="email" value="<%= usuario.email %>" required>
+                            </div>
+                            <div class="field">
+                                <label class="label">Senha atual</label>
+                                <input class="input" type="password" name="senhaAtual" placeholder="Obrigatoria para trocar email ou senha">
+                            </div>
+                            <div class="form-grid-two">
+                                <div class="field">
+                                    <label class="label">Nova senha</label>
+                                    <input class="input" type="password" name="novaSenha" minlength="8" placeholder="Opcional">
+                                </div>
+                                <div class="field">
+                                    <label class="label">Confirmar nova senha</label>
+                                    <input class="input" type="password" name="confirmarNovaSenha" minlength="8" placeholder="Repita a nova senha">
+                                </div>
+                            </div>
+                            <button type="submit" class="button is-primary settings-button account-save-button">Salvar minha conta</button>
+                        </form>
+                    </article>
+
                     <article class="settings-card">
                         <p class="settings-eyebrow">Acessibilidade</p>
                         <h3>Leitura, contraste e movimento</h3>
                         <p>Abra o menu de acessibilidade para ajustar tamanho do texto, contraste, fonte e animacoes.</p>
                         <button type="button" id="open-accessibility-from-settings" class="button is-link is-light settings-button">Abrir acessibilidade</button>
                     </article>
+
                     <article class="settings-card">
                         <p class="settings-eyebrow">Produtividade</p>
                         <h3>Criar e revisar missoes</h3>
@@ -304,12 +448,20 @@
                             <button type="button" id="open-tasks-from-settings" class="button is-light settings-button">Ver missoes</button>
                         </div>
                     </article>
+
                     <article class="settings-card">
                         <p class="settings-eyebrow">Colecao</p>
                         <h3>Conquistas e inventario</h3>
-                        <p>Vá direto para suas recompensas desbloqueadas e acompanhe como sua campanha esta evoluindo.</p>
+                        <p>Agora o inventario tem estados de resgate e fluxo de confirmacao visual para recompensas desbloqueadas.</p>
                         <button type="button" id="open-rewards-from-settings" class="button is-warning settings-button">Abrir inventario</button>
                     </article>
+
+                    <article class="settings-card">
+                        <p class="settings-eyebrow">Recuperacao</p>
+                        <h3>Fluxo de email da conta</h3>
+                        <p>Quando a infraestrutura estiver configurada, a recuperacao usa webhook de email. No ambiente local, a aplicacao gera o link de redefinicao com preview seguro.</p>
+                    </article>
+
                     <article class="settings-card">
                         <p class="settings-eyebrow">Sessao</p>
                         <h3>Sair com seguranca</h3>

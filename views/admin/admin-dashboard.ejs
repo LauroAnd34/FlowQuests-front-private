@@ -9,7 +9,7 @@
     const totalBanidos = usuarios.filter((user) => user.statusConta === 'BANIDO').length;
     const totalAdvertencias = usuarios.reduce((sum, user) => sum + ((user.advertencias || []).length), 0);
 %>
-<body class="admin-page">
+<body class="admin-page" data-message="<%= message || '' %>">
     <section id="main-content" class="section">
         <div class="container admin-container">
             <form id="admin-logout-form" action="/logout" method="POST" class="is-hidden">
@@ -285,6 +285,18 @@
                 <button id="confirm-action-button" class="button is-danger admin-modal-danger" type="button">Confirmar</button>
                 <button class="button admin-modal-secondary" type="button" data-close-confirm-modal="true">Cancelar</button>
             </footer>
+        </div>
+    </div>
+
+    <div id="admin-toast" class="dashboard-toast" aria-live="polite" aria-hidden="true">
+        <div id="admin-toast-card" class="dashboard-toast-card">
+            <span id="admin-toast-icon" class="dashboard-toast-icon">
+                <i class="fas fa-circle-info"></i>
+            </span>
+            <div class="dashboard-toast-copy">
+                <strong id="admin-toast-title">Aviso</strong>
+                <p id="admin-toast-text">Mensagem do sistema.</p>
+            </div>
         </div>
     </div>
 

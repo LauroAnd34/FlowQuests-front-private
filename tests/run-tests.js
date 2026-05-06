@@ -9,9 +9,13 @@ const {
   verifyPassword,
 } = require('../lib/security');
 const {
+  confirmRewardRedemption,
   loginUser,
+  listUsersRanking,
+  requestRewardRedemption,
   registerUser,
   resetUserPassword,
+  updateOwnProfile,
 } = require('../lib/api-client');
 
 async function run(name, fn) {
@@ -98,6 +102,46 @@ async function main() {
     });
 
     assert.equal(authenticatedUser.email, email);
+  });
+
+  await run('autogestao de conta atualiza dados no modo demo', async () => {
+    const email = `perfil-${Date.now()}@flowquests.local`;
+    const password = 'SenhaPerfil123';
+
+    const user = await registerUser({
+      nome: 'Perfil Demo',
+      email,
+      senha: password,
+    });
+
+    const updatedUser = await updateOwnProfile(user.id, {
+      nome: 'Perfil Atualizado',
+      email: `perfil-atualizado-${Date.now()}@flowquests.local`,
+      senhaAtual: password,
+      novaSenha: 'SenhaNovaPerfil123',
+    });
+
+    assert.equal(updatedUser.nome, 'Perfil Atualizado');
+    assert.equal(updatedUser.email.startsWith('perfil-atualizado-'), true);
+
+    const authenticatedUser = await loginUser({
+      email: updatedUser.email,
+      senha: 'SenhaNovaPerfil123',
+    });
+
+    assert.equal(authenticatedUser.id, user.id);
+  });
+
+  await run('ranking e inventario de recompensas respondem no modo demo', async () => {
+    const ranking = await listUsersRanking(2);
+    assert.equal(Array.isArray(ranking), true);
+    assert.equal(ranking.length >= 2, true);
+
+    const pendingClaim = await requestRewardRedemption(2, 1);
+    assert.equal(pendingClaim.status, 'pendente');
+
+    const redeemedClaim = await confirmRewardRedemption(2, 1);
+    assert.equal(redeemedClaim.status, 'resgatada');
   });
 
   if (process.exitCode) {

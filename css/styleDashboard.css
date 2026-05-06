@@ -310,6 +310,9 @@ body.dashboard-page {
 
 .notification-icon-wrapper {
     position: relative;
+    border: none;
+    padding: 0;
+    background: transparent;
 }
 
 .notification-chip {
@@ -684,6 +687,10 @@ body.dashboard-page {
     gap: 20px;
 }
 
+.settings-grid-expanded {
+    align-items: start;
+}
+
 .settings-card {
     padding: 24px;
     border-radius: 24px;
@@ -709,6 +716,293 @@ body.dashboard-page {
 
 .settings-actions .settings-button {
     margin-top: 0;
+}
+
+.settings-card-form {
+    grid-column: span 2;
+}
+
+.account-settings-form {
+    margin-top: 1rem;
+}
+
+.form-grid-two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.account-save-button {
+    width: 100%;
+}
+
+.dashboard-panel-grid,
+.ranking-shell {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.dashboard-panel {
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid rgba(204, 219, 238, 0.9);
+    background: var(--surface-card);
+    box-shadow: 0 10px 28px rgba(34, 51, 84, 0.06);
+    backdrop-filter: blur(12px);
+}
+
+.dashboard-panel-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.dashboard-panel-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.35rem;
+    color: #11284a;
+}
+
+.chart-bars {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.8rem;
+    align-items: end;
+    min-height: 220px;
+}
+
+.chart-bar-item {
+    display: grid;
+    gap: 0.55rem;
+    justify-items: center;
+}
+
+.chart-bar-track {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.4rem;
+    border-radius: 18px;
+    background: rgba(221, 233, 248, 0.66);
+}
+
+.chart-bar-fill {
+    width: 100%;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #3fc7ff 0%, #0062ff 100%);
+    box-shadow: 0 14px 26px rgba(0, 98, 255, 0.18);
+}
+
+.chart-bar-item strong {
+    font-size: 1rem;
+    color: #13304f;
+}
+
+.chart-bar-item span {
+    color: #607691;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+}
+
+.report-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.report-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.95rem 1rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid rgba(191, 212, 240, 0.72);
+}
+
+.report-item span {
+    color: #56708e;
+}
+
+.report-item strong {
+    color: #163a66;
+}
+
+.category-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 1rem;
+}
+
+.category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 999px;
+    color: #3f5977;
+    background: rgba(233, 242, 255, 0.92);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.leaderboard-list {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.leaderboard-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.05rem;
+    border-radius: 18px;
+    border: 1px solid rgba(190, 211, 238, 0.86);
+    background: rgba(255, 255, 255, 0.74);
+}
+
+.leaderboard-card.is-current-user {
+    border-color: rgba(0, 98, 255, 0.38);
+    box-shadow: 0 14px 30px rgba(0, 98, 255, 0.1);
+}
+
+.leaderboard-position {
+    min-width: 54px;
+    height: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eff5ff, #ddecff);
+    color: #1b4d87;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+}
+
+.leaderboard-copy strong {
+    display: block;
+    color: #1a2f49;
+}
+
+.leaderboard-copy span {
+    color: #607691;
+    font-size: 0.88rem;
+}
+
+.leaderboard-score {
+    font-weight: 800;
+    color: #0f5496;
+}
+
+.compact-list .quest-card {
+    padding: 18px 20px;
+}
+
+.reward-card {
+    position: relative;
+}
+
+.reward-status-badge {
+    display: inline-flex;
+    margin-top: 0.9rem;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-locked {
+    color: #6a7f98;
+    background: #ecf2f8;
+}
+
+.status-disponivel {
+    color: #0f8d64;
+    background: #e8fbf2;
+}
+
+.status-pendente {
+    color: #976400;
+    background: #fff5d9;
+}
+
+.status-resgatada {
+    color: #13437d;
+    background: #eaf2ff;
+}
+
+.reward-extra,
+.reward-meta {
+    margin-top: 0.9rem;
+    color: #5d738e;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.reward-action-button {
+    width: 100%;
+    margin-top: 1rem;
+    min-height: 2.9rem;
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    background: linear-gradient(135deg, #0f6dff, #00b7ff);
+    font-weight: 800;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.reward-action-button:hover {
+    transform: translateY(-1px);
+}
+
+.reward-action-button.is-secondary {
+    background: linear-gradient(135deg, #12426b, #1d6dff);
+}
+
+.tone-info {
+    color: #0062ff;
+}
+
+.tone-danger {
+    color: #d92d20;
+}
+
+.tone-success {
+    color: #10956d;
+}
+
+.tone-warning {
+    color: #b97800;
+}
+
+.tone-remedios {
+    border-left: 4px solid #0f91cb;
+}
+
+.tone-atividades {
+    border-left: 4px solid #10b981;
+}
+
+.tone-trabalhos {
+    border-left: 4px solid #0062ff;
+}
+
+.tone-eventos {
+    border-left: 4px solid #f59e0b;
+}
+
+.tone-outros {
+    border-left: 4px solid #7c8ba1;
 }
 
 .fab-button {
@@ -1072,7 +1366,12 @@ body.accessibility-high-contrast .title {
 body.accessibility-high-contrast .overview-card,
 body.accessibility-high-contrast .settings-card,
 body.accessibility-high-contrast .overview-action,
-body.accessibility-high-contrast .settings-actions .settings-button {
+body.accessibility-high-contrast .settings-actions .settings-button,
+body.accessibility-high-contrast .dashboard-panel,
+body.accessibility-high-contrast .leaderboard-card,
+body.accessibility-high-contrast .report-item,
+body.accessibility-high-contrast .category-pill,
+body.accessibility-high-contrast .chart-bar-track {
     color: #fff !important;
     background: #0a0a0a !important;
     border: 1px solid #fff !important;
@@ -1094,6 +1393,14 @@ body.accessibility-high-contrast .textarea::placeholder {
 body.accessibility-high-contrast .dashboard-toast-icon {
     background: #1d1d1d !important;
     color: #ffffff !important;
+}
+
+body.accessibility-high-contrast .reward-status-badge,
+body.accessibility-high-contrast .leaderboard-position,
+body.accessibility-high-contrast .reward-action-button {
+    color: #ffffff !important;
+    background: #1c1c1c !important;
+    border: 1px solid #ffffff !important;
 }
 
 body.accessibility-readable-font,
@@ -1169,7 +1476,9 @@ body.is-dragging-accessibility-fab .accessibility-fab {
     }
 
     .overview-grid,
-    .settings-grid {
+    .settings-grid,
+    .dashboard-panel-grid,
+    .ranking-shell {
         grid-template-columns: 1fr;
     }
 
@@ -1206,6 +1515,10 @@ body.is-dragging-accessibility-fab .accessibility-fab {
 
     .rewards-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .settings-card-form {
+        grid-column: auto;
     }
 }
 
@@ -1331,6 +1644,10 @@ body.is-dragging-accessibility-fab .accessibility-fab {
         grid-template-columns: 1fr;
     }
 
+    .form-grid-two {
+        grid-template-columns: 1fr;
+    }
+
     .section-title {
         font-size: 1rem;
     }
@@ -1378,6 +1695,15 @@ body.is-dragging-accessibility-fab .accessibility-fab {
     .pagination-list {
         width: 100%;
         justify-content: center;
+    }
+
+    .leaderboard-card {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .leaderboard-score {
+        padding-left: 0.2rem;
     }
 }
 

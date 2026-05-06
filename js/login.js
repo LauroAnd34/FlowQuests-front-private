@@ -21,6 +21,21 @@ document.addEventListener('DOMContentLoaded', () => {
       colorClass: 'is-success',
       iconClass: 'fa-check-circle',
     },
+    recovery_sent: {
+      text: 'Email de recuperacao enviado com sucesso. Confira sua caixa de entrada.',
+      colorClass: 'is-success',
+      iconClass: 'fa-check-circle',
+    },
+    recovery_preview: {
+      text: 'Link de recuperacao gerado no modo local. Confira o terminal para abrir a redefinicao.',
+      colorClass: 'is-success',
+      iconClass: 'fa-check-circle',
+    },
+    recovery_delivery_failed: {
+      text: 'Nao foi possivel enviar a recuperacao agora. Tente novamente em instantes.',
+      colorClass: 'is-danger',
+      iconClass: 'fa-times-circle',
+    },
     recovery_missing_email: {
       text: 'Informe o email para iniciar a recuperacao da conta.',
       colorClass: 'is-danger',

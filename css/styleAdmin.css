@@ -300,6 +300,72 @@ body.admin-page {
     font-weight: 700;
 }
 
+.dashboard-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-18px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease, transform 0.24s ease;
+    z-index: 1300;
+}
+
+.dashboard-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.dashboard-toast-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    width: min(92vw, 520px);
+    padding: 0.95rem 1rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid #dce7f7;
+    box-shadow: 0 20px 42px rgba(15, 23, 42, 0.16);
+}
+
+.dashboard-toast-icon {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #eef4ff;
+    color: #2d7ff9;
+    flex-shrink: 0;
+}
+
+.dashboard-toast-copy strong {
+    display: block;
+    font-weight: 800;
+}
+
+.dashboard-toast-copy p {
+    margin-top: 0.2rem;
+    color: #5d738e;
+    line-height: 1.45;
+}
+
+.dashboard-toast-card.is-success .dashboard-toast-icon {
+    color: #119e72;
+    background: #eafbf3;
+}
+
+.dashboard-toast-card.is-error .dashboard-toast-icon {
+    color: #d92d20;
+    background: #fff0ee;
+}
+
+.dashboard-toast-card.is-warning .dashboard-toast-icon {
+    color: #c77700;
+    background: #fff6df;
+}
+
 .admin-modal-primary {
     box-shadow: 0 14px 28px rgba(20, 163, 101, 0.18);
 }
@@ -474,7 +540,8 @@ body.accessibility-high-contrast {
 body.accessibility-high-contrast .admin-summary-card,
 body.accessibility-high-contrast .admin-table-wrapper,
 body.accessibility-high-contrast .admin-modal-card,
-body.accessibility-high-contrast .accessibility-panel {
+body.accessibility-high-contrast .accessibility-panel,
+body.accessibility-high-contrast .dashboard-toast-card {
     color: #fff !important;
     background: #0a0a0a !important;
     border: 1px solid #fff !important;
@@ -547,6 +614,11 @@ body.accessibility-high-contrast .accessibility-action {
 body.accessibility-high-contrast .accessibility-action.is-active {
     color: #000814 !important;
     background: #ffcf33 !important;
+}
+
+body.accessibility-high-contrast .dashboard-toast-icon {
+    color: #ffffff !important;
+    background: #1d1d1d !important;
 }
 
 body.accessibility-readable-font,

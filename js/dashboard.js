@@ -18,20 +18,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const tasksContainer = document.getElementById('tasks-container');
   const cancelCompletionButton = document.getElementById('cancel-completion-button');
   const confirmCompletionButton = document.getElementById('confirm-completion-button');
-  const logoutButton = document.getElementById('logout-button');
   const confirmLogoutModal = document.getElementById('confirm-logout-modal');
   const cancelLogoutButton = document.getElementById('cancel-logout-button');
   const openAccessibilityFromSettings = document.getElementById('open-accessibility-from-settings');
   const openLogoutFromSettings = document.getElementById('open-logout-from-settings');
-  const accessibilityToggle = document.getElementById('accessibility-toggle');
   const toast = document.getElementById('dashboard-toast');
   const toastCard = document.getElementById('dashboard-toast-card');
   const toastIcon = document.getElementById('dashboard-toast-icon');
   const toastTitle = document.getElementById('dashboard-toast-title');
   const toastText = document.getElementById('dashboard-toast-text');
   const progressBar = document.getElementById('xp-progress-bar');
-  const progressStartLabel = document.getElementById('progress-start-label');
-  const progressEndLabel = document.getElementById('progress-end-label');
   const tabContents = document.querySelectorAll('.tab-content');
   const sidebarNavLinks = document.querySelectorAll('.sidebar-nav-link');
   const shortcutLinks = document.querySelectorAll('[data-dashboard-shortcut]');
@@ -42,10 +38,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const openTasksFromSettings = document.getElementById('open-tasks-from-settings');
   const logoutForm = document.getElementById('logout-form');
   const confirmLogoutSubmitButton = document.getElementById('confirm-logout-submit-button');
+  const rewardButtons = document.querySelectorAll('[data-reward-action]');
   const csrfToken = body.dataset.csrfToken || '';
+  const initialTab = body.dataset.initialTab || 'dashboard';
+  const pageMessage = body.dataset.message || '';
 
   let taskIdToComplete = null;
   let currentUserXP = Number(body.dataset.userXp || 0);
+
+  const messageMap = {
+    account_updated: ['is-success', 'Conta atualizada', 'Seus dados foram salvos com sucesso.'],
+    account_missing_fields: ['is-warning', 'Campos pendentes', 'Nome e email sao obrigatorios para salvar sua conta.'],
+    account_invalid_email: ['is-error', 'Email invalido', 'Digite um email valido para atualizar sua conta.'],
+    account_current_password_required: ['is-warning', 'Confirme sua identidade', 'Informe a senha atual para trocar email ou senha.'],
+    account_current_password_invalid: ['is-error', 'Senha atual incorreta', 'A senha atual informada nao confere.'],
+    account_email_in_use: ['is-warning', 'Email em uso', 'Esse email ja esta vinculado a outra conta.'],
+    account_password_short: ['is-warning', 'Senha curta', 'A nova senha precisa ter pelo menos 8 caracteres.'],
+    account_password_weak: ['is-warning', 'Senha fraca', 'Use uma senha com maiuscula, minuscula e numero.'],
+    account_update_failed: ['is-error', 'Falha ao salvar', 'Nao foi possivel atualizar sua conta agora.'],
+    reward_requested: ['is-success', 'Resgate solicitado', 'A recompensa foi enviada para a fila de processamento do seu inventario.'],
+    reward_confirmed: ['is-success', 'Recompensa confirmada', 'Seu inventario marcou o item como resgatado.'],
+    reward_failed: ['is-error', 'Falha no resgate', 'Nao foi possivel concluir a acao da recompensa agora.'],
+    password_mismatch: ['is-warning', 'Senhas diferentes', 'As senhas informadas nao coincidem.'],
+  };
 
   function showToast(type, title, message) {
     if (!toast || !toastCard || !toastIcon || !toastTitle || !toastText) {
@@ -75,7 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast.timeoutId = window.setTimeout(() => {
       toast.classList.remove('is-visible');
       toast.setAttribute('aria-hidden', 'true');
-    }, 3200);
+    }, 3600);
+  }
+
+  function showPageMessageIfNeeded() {
+    const feedback = messageMap[pageMessage];
+
+    if (!feedback) {
+      return;
+    }
+
+    showToast(feedback[0], feedback[1], feedback[2]);
   }
 
   function updateProgressBar() {
@@ -85,24 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const levelSize = 500;
     const currentLevel = Math.floor(currentUserXP / levelSize);
-    const startXP = currentLevel * levelSize;
-    const endXP = startXP + levelSize;
-    const progressInLevel = currentUserXP - startXP;
-
-    if (progressBar.tagName.toLowerCase() === 'progress') {
-      progressBar.value = progressInLevel;
-      progressBar.max = levelSize;
-    } else {
-      progressBar.style.width = `${Math.max(8, Math.round((progressInLevel / levelSize) * 100))}%`;
-    }
-
-    if (progressStartLabel) {
-      progressStartLabel.textContent = startXP;
-    }
-
-    if (progressEndLabel) {
-      progressEndLabel.textContent = endXP;
-    }
+    const progressInLevel = currentUserXP - currentLevel * levelSize;
+    progressBar.style.width = `${Math.max(8, Math.round((progressInLevel / levelSize) * 100))}%`;
   }
 
   function updateGreeting() {
@@ -165,8 +174,27 @@ document.addEventListener('DOMContentLoaded', () => {
     profileMenu?.classList.remove('is-active');
   }
 
+  async function sendPost(url) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': csrfToken,
+      },
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(payload.message || 'Falha na operacao.');
+    }
+
+    return payload;
+  }
+
   updateProgressBar();
   updateGreeting();
+  activateTab(initialTab);
+  showPageMessageIfNeeded();
 
   if (taskDateInput) {
     taskDateInput.min = new Date().toISOString().split('T')[0];
@@ -238,12 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
   shortcutButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const target = button.dataset.dashboardShortcutButton;
-      if (target === 'configuracoes') {
-        activateTab('configuracoes');
-        window.dispatchEvent(new Event('flowquests:open-accessibility'));
-        return;
-      }
-
       if (target) {
         goToTab(target);
       }
@@ -277,8 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
       closeModal(addTaskModal);
     }
   });
-
-  logoutButton?.addEventListener('click', () => openModal(confirmLogoutModal));
 
   cancelLogoutButton?.addEventListener('click', () => closeModal(confirmLogoutModal));
 
@@ -321,24 +341,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch(`/api/tarefas/${taskIdToComplete}/completar`, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-Token': csrfToken,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Falha ao concluir tarefa.');
-      }
-
+      await sendPost(`/api/tarefas/${taskIdToComplete}/completar`);
       window.location.reload();
     } catch (error) {
-      showToast('is-error', 'Falha ao concluir', 'Nao foi possivel concluir a missao agora.');
+      showToast('is-error', 'Falha ao concluir', error.message || 'Nao foi possivel concluir a missao agora.');
     } finally {
       taskIdToComplete = null;
       closeModal(confirmTaskModal);
     }
+  });
+
+  rewardButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+      const rewardId = button.dataset.rewardId;
+      const rewardAction = button.dataset.rewardAction;
+      const endpoint =
+        rewardAction === 'confirmar'
+          ? `/api/recompensas/${rewardId}/confirmar`
+          : `/api/recompensas/${rewardId}/solicitar`;
+
+      try {
+        await sendPost(endpoint);
+        const message =
+          rewardAction === 'confirmar'
+            ? 'reward_confirmed'
+            : 'reward_requested';
+        window.location.href = `/dashboard?tab=recompensas&message=${message}`;
+      } catch (error) {
+        showToast('is-error', 'Falha no inventario', error.message || 'Nao foi possivel atualizar a recompensa.');
+      }
+    });
   });
 
   taskForm?.addEventListener('submit', async (event) => {
@@ -372,12 +404,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!response.ok) {
-        throw new Error('Falha ao criar tarefa.');
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || 'Falha ao criar tarefa.');
       }
 
-      window.location.reload();
+      window.location.href = '/dashboard?tab=tarefas';
     } catch (error) {
-      showToast('is-error', 'Falha ao salvar', 'Nao foi possivel criar a missao agora.');
+      showToast('is-error', 'Falha ao salvar', error.message || 'Nao foi possivel criar a missao agora.');
     }
   });
 });
