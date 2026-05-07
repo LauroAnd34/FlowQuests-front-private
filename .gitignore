@@ -7,3 +7,8 @@ yarn-error.log*
 package-lock.json.bak
 .DS_Store
 Thumbs.db
+docx_render/
+docx_contact_sheets/
+OFICIAL - Documentação do Sistema - FlowQuests - atualizada.docx
+OFICIAL - Documentação do Sistema - FlowQuests - atualizada-sanitizada.docx
+scripts/
