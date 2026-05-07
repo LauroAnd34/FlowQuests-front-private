@@ -505,7 +505,7 @@ app.post('/login', async (req, res) => {
       req.session.userId = user.id;
       req.session.csrfToken = createCsrfToken();
       clearLoginFailures(loginAttemptKey);
-      res.redirect('/dashboard');
+      res.redirect(user.perfil === 'ADMIN' ? '/admin/painel' : '/dashboard');
     });
   } catch (error) {
     const failureMessage = resolveLoginFailure(error);
@@ -524,7 +524,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  res.redirect(req.session.userId ? '/dashboard' : '/');
+  res.redirect('/');
 });
 
 app.post('/logout', (req, res) => {
@@ -540,9 +540,14 @@ app.get('/dashboard', requireSession, async (req, res) => {
   const message = String(req.query.message || '');
 
   try {
-    const [usuario, tarefasPendentesRaw, tarefasConcluidasRaw, conquistas, rankingUsuarios] =
+    const usuario = await getUserProfile(userId);
+
+    if (usuario.perfil === 'ADMIN') {
+      return res.redirect('/admin/painel');
+    }
+
+    const [tarefasPendentesRaw, tarefasConcluidasRaw, conquistas, rankingUsuarios] =
       await Promise.all([
-        getUserProfile(userId),
         getUserTasksByState(userId, 'pendente'),
         getUserTasksByState(userId, 'concluida'),
         getAchievements(userId),
@@ -684,7 +689,7 @@ app.get('/admin/painel', requireSession, async (req, res) => {
       buildAdminDashboardViewModel({ admin, usuarios, message })
     );
   } catch (error) {
-    res.redirect('/dashboard');
+    res.redirect('/?message=error');
   }
 });
 
